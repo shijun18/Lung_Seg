@@ -2,7 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.vscode/
+losses_pytorch/
 # C extensions
 *.so
 
