@@ -252,7 +252,8 @@ class SemanticSeg(object):
         train_dice = AverageMeter()
         train_acc = AverageMeter()
 
-
+        from metrics import RunningDice
+        run_dice = RunningDice(labels=[0,1],ignore_label=-1)
         for step, sample in enumerate(train_loader):
 
             data = sample['image']
@@ -293,13 +294,21 @@ class SemanticSeg(object):
             train_loss.update(loss.item(), data.size(0))
             train_dice.update(dice.item(), data.size(0))
 
+            # measure run dice  
+            seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W 
+            target = torch.argmax(target,1).detach().cpu().numpy()
+            run_dice.update_matrix(target,seg_output)
+
             torch.cuda.empty_cache()
 
             if self.global_step % 10 == 0:
                 if self.mode == 'cls':
                     print('epoch:{},step:{},train_loss:{:.5f},train_acc:{:.5f},lr:{}'.format(epoch, step, loss.item(), acc.item(), optimizer.param_groups[0]['lr']))
                 elif self.mode == 'seg':
-                    print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},lr:{}'.format(epoch, step, loss.item(), dice.item(),optimizer.param_groups[0]['lr']))
+                    rundice, dice_list = run_dice.compute_dice() 
+                    print("Category Dice: ", dice_list)
+                    print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},run_dice:{:.5f},lr:{}'.format(epoch, step, loss.item(), dice.item(), rundice, optimizer.param_groups[0]['lr']))
+                    run_dice.init_op()
                 else:
                     print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},train_acc:{:.5f},lr:{}'.format(epoch, step, loss.item(), dice.item(),acc.item(), optimizer.param_groups[0]['lr']))
 
@@ -333,6 +342,8 @@ class SemanticSeg(object):
         val_dice = AverageMeter()
         val_acc = AverageMeter()
 
+        from metrics import RunningDice
+        run_dice = RunningDice(labels=[0,1],ignore_label=-1)
         with torch.no_grad():
             for step, sample in enumerate(val_loader):
                 data = sample['image']
@@ -369,13 +380,21 @@ class SemanticSeg(object):
                 val_loss.update(loss.item(), data.size(0))
                 val_dice.update(dice.item(), data.size(0))
 
+                # measure run dice  
+                seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W 
+                target = torch.argmax(target,1).detach().cpu().numpy()
+                run_dice.update_matrix(target,seg_output)
+
                 torch.cuda.empty_cache()
 
                 if step % 10 == 0:
                     if self.mode == 'cls':
                         print('epoch:{},step:{},val_loss:{:.5f},val_acc:{:.5f}'.format(epoch, step, loss.item(), acc.item()))
                     elif self.mode == 'seg':
-                        print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f}'.format(epoch, step, loss.item(), dice.item()))
+                        rundice, dice_list = run_dice.compute_dice() 
+                        print("Category Dice: ", dice_list)
+                        print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f},rundice:{:.5f}'.format(epoch, step, loss.item(), dice.item(),rundice))
+                        run_dice.init_op()
                     else:
                         print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f},val_acc:{:.5f}'.format(epoch, step, loss.item(), dice.item(), acc.item()))
 
@@ -418,6 +437,8 @@ class SemanticSeg(object):
         test_dice = AverageMeter()
         test_acc = AverageMeter()
         from PIL import Image
+        from metrics import RunningDice
+        run_dice = RunningDice(labels=[0,1],ignore_label=-1)
 
         with torch.no_grad():
             for step, sample in enumerate(test_loader):
@@ -454,6 +475,7 @@ class SemanticSeg(object):
 
                 seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W N=1
                 target = torch.argmax(target,1).detach().cpu().numpy()
+                run_dice.update_matrix(target,seg_output)
                 print(np.unique(seg_output),np.unique(target))
 
                 # save
@@ -466,8 +488,9 @@ class SemanticSeg(object):
                 
                 print('step:{},test_dice:{:.5f},test_acc:{:.5f}'.format(step,dice.item(),acc.item()))
             
-
-        print('avg_dice:{:.5f},avg_acc:{:.5f}'.format(test_dice.avg, test_acc.avg))
+        rundice, dice_list = run_dice.compute_dice() 
+        print("Category Dice: ", dice_list)
+        print('avg_dice:{:.5f},avg_acc:{:.5f}，rundice:{:.5f}'.format(test_dice.avg, test_acc.avg, rundice))
 
 
     def _get_net(self, net_name):

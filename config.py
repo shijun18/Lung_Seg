@@ -16,7 +16,7 @@ json_path = {
 }
     
 DISEASE = 'Lung_Tumor' 
-MODE = 'cls'
+MODE = 'seg'
 NET_NAME = 'm_unet'
 VERSION = 'v1.0'
 
@@ -52,7 +52,7 @@ PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',RO
 
 #--------------------------------- others
 INPUT_SHAPE = (256,256)
-BATCH_SIZE = 16
+BATCH_SIZE = 24
 
 CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
 
