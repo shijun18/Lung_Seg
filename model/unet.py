@@ -151,7 +151,7 @@ class UNet(nn.Module):
             b, c, _, _ = seg_logits.size()
             weight = torch.sigmoid(cls_logits)
             weight = (weight > 0.5).float()
-            seg_logits = seg_logits[:,1:,...] * weight.view(b,c-1,1,1).expand_as(seg_logits[:,1:,...])
+            seg_logits[:,1:,...] = seg_logits[:,1:,...] * weight.view(b,c-1,1,1).expand_as(seg_logits[:,1:,...])
 
         return [cls_logits,seg_logits]
 

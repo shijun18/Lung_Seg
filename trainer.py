@@ -258,7 +258,6 @@ class SemanticSeg(object):
 
             data = sample['image']
             target = sample['mask']
-            # print(np.unique(np.argmax(np.array(target[0]),axis=0)))
             label = sample['label']
 
             data = data.cuda()
@@ -400,7 +399,7 @@ class SemanticSeg(object):
 
         return val_loss.avg, val_dice.avg, val_acc.avg
 
-    def test(self, test_path, save_path, net=None, mode='seg'):
+    def test(self, test_path, save_path, net=None, mode='seg', save_flag=False):
         if net is None:
             net = self.net
         
@@ -440,11 +439,17 @@ class SemanticSeg(object):
         from metrics import RunningDice
         run_dice = RunningDice(labels=[0,1],ignore_label=-1)
 
+        cls_result = {
+            'true': [],
+            'pred': [],
+            'prob': []
+        }
+
         with torch.no_grad():
             for step, sample in enumerate(test_loader):
                 data = sample['image']
                 target = sample['mask']
-                label = sample['label']
+                label = sample['label'] #N*C
                 print(label)
 
                 data = data.cuda()
@@ -467,11 +472,14 @@ class SemanticSeg(object):
                 dice = compute_dice(seg_output.detach(), target, ignore_index=0)
                 test_dice.update(dice.item(), data.size(0))
                 
+                cls_result['prob'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
                 cls_output = (cls_output > 0.5).float() # N*C
+                cls_result['pred'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
+                cls_result['true'].extend(label.detach().squeeze().cpu().numpy().tolist())
                 print(cls_output.detach())
                 if mode == 'mtl':
                     b, c, _, _ = seg_output.size()
-                    seg_output = seg_output * cls_output.view(b,c,1,1).expand_as(seg_output)
+                    seg_output[:,1:,...] = seg_output[:,1:,...] * cls_output.view(b,c-1,1,1).expand_as(seg_output[:,1:,...])
 
                 seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W N=1
                 target = torch.argmax(target,1).detach().cpu().numpy()
@@ -479,10 +487,10 @@ class SemanticSeg(object):
                 print(np.unique(seg_output),np.unique(target))
 
                 # save
-                seg_output = np.squeeze(seg_output).astype(np.uint8) 
-                seg_output = Image.fromarray(seg_output, mode='P')
-                seg_output.save(os.path.join(save_path,test_path[step].split('.')[0] + '.png'))
-                torch.cuda.empty_cache()
+                if mode != 'cls' and save_flag:
+                    seg_output = np.squeeze(seg_output).astype(np.uint8) 
+                    seg_output = Image.fromarray(seg_output, mode='P')
+                    seg_output.save(os.path.join(save_path,test_path[step].split('.')[0] + mode +'.png'))
 
                 torch.cuda.empty_cache()
                 
@@ -491,6 +499,8 @@ class SemanticSeg(object):
         rundice, dice_list = run_dice.compute_dice() 
         print("Category Dice: ", dice_list)
         print('avg_dice:{:.5f},avg_acc:{:.5f}，rundice:{:.5f}'.format(test_dice.avg, test_acc.avg, rundice))
+
+        return cls_result
 
 
     def _get_net(self, net_name):

@@ -4,9 +4,11 @@ from trainer import SemanticSeg
 import pandas as pd
 import random
 from PIL import Image
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
 
-from config import INIT_TRAINER, SETUP_TRAINER, VERSION, CURRENT_FOLD, PATH_LIST, FOLD_NUM
-
+from config import INIT_TRAINER, SETUP_TRAINER, CURRENT_FOLD, PATH_LIST, FOLD_NUM, ROI_NAME
+from config import VERSION, ROI_NAME, DISEASE, MODE
 import time
 
 
@@ -45,6 +47,8 @@ if __name__ == "__main__":
                         choices=["train", 'train_cross_val', "inf","test"],
                         help='choose the mode',
                         type=str)
+    parser.add_argument('-s', '--save', default='no', choices=['no', 'n', 'yes', 'y'],
+                        help='save the forward middle features or not', type=str)
     args = parser.parse_args()
 
     # Set data path & segnetwork
@@ -88,11 +92,24 @@ if __name__ == "__main__":
     ###############################################
     if args.mode == 'test':
         start_time = time.time()
-        test_path = path_list[int(len(path_list) * 0.9):]
+        test_path = path_list[int(len(path_list) * 0.8):]
         print("test set len:",len(test_path))
-        save_path = './result/test'
+
+        save_path = './analysis/result/{}/{}/{}'.format(DISEASE,VERSION,MODE)
         if not os.path.exists(save_path):
             os.makedirs(save_path)
-        segnetwork.test(test_path,save_path,mode='seg')
-        
+        save_flag = False if args.save == 'no' or args.save == 'n' else True
+        cls_result = segnetwork.test(test_path,save_path,mode=MODE,save_flag=save_flag)
+
+        if MODE != 'seg':
+            csv_path = os.path.join(save_path,ROI_NAME + '.csv')
+            info = {}
+            info['id'] = test_path
+            info['label'] = cls_result['true']
+            info['pred'] = cls_result['pred']
+            info['prob'] = cls_result['prob']
+            print(classification_report(cls_result['true'], cls_result['pred'], target_names=['without','with'],output_dict=False))
+            print(confusion_matrix(cls_result['true'], cls_result['pred']))
+            csv_file = pd.DataFrame(info)
+            csv_file.to_csv(csv_path, index=False)
         print('run time:%.4f' % (time.time() - start_time))
