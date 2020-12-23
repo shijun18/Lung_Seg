@@ -18,19 +18,19 @@ json_path = {
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'm_unet'
-VERSION = 'v1.0'
+VERSION = 'v1.2'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
 DEVICE = '0'
 # Must be True when pre-training and inference
-PRE_TRAINED = False 
+PRE_TRAINED = True 
 CKPT_POINT = False
 # 1,2,...,8
 CURRENT_FOLD = 1
 GPU_NUM = len(DEVICE.split(','))
-FOLD_NUM = 9
+FOLD_NUM = 5
 
 # Arguments for trainer initialization
 #--------------------------------- single or multiple
@@ -54,7 +54,8 @@ PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',RO
 INPUT_SHAPE = (256,256)
 BATCH_SIZE = 24
 
-CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
+CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format('Lung_Tumor', 'cls', 'v1.0', ROI_NAME, str(1))
+# CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
 
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
 print(WEIGHT_PATH)
@@ -85,7 +86,7 @@ INIT_TRAINER = {
  }
 #---------------------------------
 
-__seg_loss__ = ['DiceLoss','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
+__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
 __cls_loss__ = ['BCEWithLogitsLoss']
 __mtl_loss__ = ['BCEPlusDice']
 # Arguments when perform the trainer 
@@ -93,7 +94,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'TopkCEPlusDice'
+    LOSS_FUN = 'FocalTverskyLoss'
 else:
     LOSS_FUN = 'BCEPlusDice'
 

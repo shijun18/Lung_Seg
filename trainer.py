@@ -541,6 +541,14 @@ class SemanticSeg(object):
         elif loss_fun == 'PowDiceLoss':
             from loss.dice_loss import DiceLoss
             loss = DiceLoss(weight=class_weight, ignore_index=0, p=2)
+        
+        elif loss_fun == 'TverskyLoss':
+            from loss.tversky_loss import TverskyLoss
+            loss = TverskyLoss(weight=class_weight, ignore_index=0, alpha=0.7)
+        
+        elif loss_fun == 'FocalTverskyLoss':
+            from loss.tversky_loss import TverskyLoss
+            loss = TverskyLoss(weight=class_weight, ignore_index=0, alpha=0.7, gamma=0.75)
 
         elif loss_fun == 'BCEWithLogitsLoss':
             loss = nn.BCEWithLogitsLoss(class_weight)
