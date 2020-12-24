@@ -516,19 +516,14 @@ class SemanticSeg(object):
         elif net_name == 'er_unet':
             from model.unet import unet
             net = unet(n_channels=self.channels, n_classes=self.num_classes, cls_location='end',revise=True)
-        
-        elif net_name == 'resUnet18':
-            from model.resUnet import ResUNet18
-            net = ResUNet18(n_channels=self.channels,n_classes=self.num_classes)
 
-        elif net_name == 'resUnet34':
-            from model.resUnet import ResUNet34
-            net = ResUNet34(n_channels=self.channels,n_classes=self.num_classes)
+        elif net_name.startswith('ResUNet'):
+            from model import resUnet
+            net = resUnet.__dict__[net_name](n_channels=self.channels,n_classes=self.num_classes)    
 
-        elif net_name == 'resUnet50':
-            from model.resUnet import ResUNet50
-            net = ResUNet50(n_channels=self.channels,n_classes=self.num_classes)
-            
+        elif net_name.startswith('deeplabv3plus'):
+            from model import deeplab
+            net = deeplab.__dict__[net_name](n_channels=self.channels,n_classes=self.num_classes)    
         return net
 
     def _get_loss(self, loss_fun, class_weight=None):

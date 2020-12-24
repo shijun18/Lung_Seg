@@ -6,7 +6,7 @@ from utils import get_path_with_annotation,get_path_with_annotation_ratio
 from utils import get_weight_path
 
 __disease__ = ['Covid-Seg','Lung_Tumor']
-__net__ = ['m_unet','mr_unet','e_unet','er_unet','resUnet18','resUnet34','resUnet50']
+__net__ = ['m_unet','mr_unet','e_unet','er_unet','ResUNet18','ResUNet34','ResUNet50','deeplabv3plus_resnet18','deeplabv3plus_resnet34','deeplabv3plus_resnet50','deeplabv3plus_resnet101']
 __mode__ = ['cls','seg','mtl']
 
 
@@ -22,15 +22,15 @@ json_path = {
     'EGFR':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/EGFR.json',
 }
     
-DISEASE = 'Lung_Tumor' 
-MODE = 'cls'
-NET_NAME = 'resUnet18'
-VERSION = 'v5.3-half'
+DISEASE = 'Covid-Seg' 
+MODE = 'seg'
+NET_NAME = 'deeplabv3plus_resnet18'
+VERSION = 'v8.3-half'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '0'
+DEVICE = '5'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False
@@ -52,8 +52,11 @@ SCALE = info['scale'][ROI_NAME]
 #---------------------------------
 
 #--------------------------------- mode and data path setting
+#zero
 # PATH_LIST = glob.glob(os.path.join(info['2d_data']['save_path'],'*.hdf5'))
+#all
 # PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
+#half
 PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
 #---------------------------------
 

@@ -602,17 +602,15 @@ class ResUNet152(nn.Module):
 
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
   
-  net = ResUNet34(n_channels=1, n_classes=2)
+#     net = ResUNet34(n_channels=1, n_classes=2)
 
 
-  from torchsummary import summary
-  import os 
-  os.environ['CUDA_VISIBLE_DEVICES'] = '2'
-  summary(net.cuda(),input_size=(1,512,512),batch_size=1,device='cuda')
+#     from torchsummary import summary
+#     import os 
+#     os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+#     summary(net.cuda(),input_size=(1,512,512),batch_size=1,device='cuda')
 
-  import sys
-  sys.path.append('..')
-  from utils import count_params_and_macs
-  count_params_and_macs(net.cuda(),(1,1,512,512))
+#     from utils import count_params_and_macs
+#     count_params_and_macs(net.cuda(),(1,1,512,512))
