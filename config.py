@@ -6,26 +6,33 @@ from utils import get_path_with_annotation,get_path_with_annotation_ratio
 from utils import get_weight_path
 
 __disease__ = ['Covid-Seg','Lung_Tumor']
-__net__ = ['m_unet','mr_unet','e_unet','er_unet']
+__net__ = ['m_unet','mr_unet','e_unet','er_unet','resUnet18','resUnet34','resUnet50']
 __mode__ = ['cls','seg','mtl']
 
 
 json_path = {
+    'Cervical':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/Cervical_Oar.json',
+    'Nasopharynx':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/Nasopharynx_Oar.json',
+    'Structseg_HaN':'/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/Structseg_HaN.json',
+    'Structseg_THOR':'/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/Structseg_THOR.json',
+    'SegTHOR':'/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/SegTHOR.json',
     'Covid-Seg':'/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/Covid-Seg.json', # competition
-    'Lung_Tumor':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/Lung_Tumor.json'
+    'Lung':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/Lung_Oar.json',
+    'Lung_Tumor':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/Lung_Tumor.json',
+    'EGFR':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/EGFR.json',
 }
     
 DISEASE = 'Lung_Tumor' 
-MODE = 'seg'
-NET_NAME = 'm_unet'
-VERSION = 'v1.2'
+MODE = 'cls'
+NET_NAME = 'resUnet18'
+VERSION = 'v5.3-half'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
 DEVICE = '0'
 # Must be True when pre-training and inference
-PRE_TRAINED = True 
+PRE_TRAINED = False 
 CKPT_POINT = False
 # 1,2,...,8
 CURRENT_FOLD = 1
@@ -46,6 +53,7 @@ SCALE = info['scale'][ROI_NAME]
 
 #--------------------------------- mode and data path setting
 # PATH_LIST = glob.glob(os.path.join(info['2d_data']['save_path'],'*.hdf5'))
+# PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
 PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
 #---------------------------------
 
@@ -54,8 +62,8 @@ PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',RO
 INPUT_SHAPE = (256,256)
 BATCH_SIZE = 24
 
-CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format('Lung_Tumor', 'cls', 'v1.0', ROI_NAME, str(1))
-# CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
+# CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'cls', 'v1.0', ROI_NAME, str(1))
+CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
 
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
 print(WEIGHT_PATH)
@@ -86,7 +94,7 @@ INIT_TRAINER = {
  }
 #---------------------------------
 
-__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
+__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
 __cls_loss__ = ['BCEWithLogitsLoss']
 __mtl_loss__ = ['BCEPlusDice']
 # Arguments when perform the trainer 
@@ -94,7 +102,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'FocalTverskyLoss'
+    LOSS_FUN = 'TopkCEPlusDice'
 else:
     LOSS_FUN = 'BCEPlusDice'
 

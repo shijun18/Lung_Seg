@@ -266,20 +266,20 @@ class SemanticSeg(object):
 
             output = net(data)
             if self.mode == 'cls':
-                loss = criterion(output[0], label)
+                loss = criterion(output[1], label)
             elif self.mode == 'seg':
-                loss = criterion(output[1], target)
+                loss = criterion(output[0], target)
             else:
-                loss = criterion(output,[label,target])
+                loss = criterion(output,[target,label])
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
-            cls_output = output[0] #N*C
+            cls_output = output[1] #N*C
             cls_output = F.sigmoid(cls_output).float()
 
-            seg_output = output[1].float() #N*C*H*W
+            seg_output = output[0].float() #N*C*H*W
             seg_output = F.softmax(seg_output, dim=1)
 
             loss = loss.float()
@@ -355,17 +355,17 @@ class SemanticSeg(object):
 
                 output = net(data)
                 if self.mode == 'cls':
-                    loss = criterion(output[0], label)
+                    loss = criterion(output[1], label)
                 elif self.mode == 'seg':
-                    loss = criterion(output[1], target)
+                    loss = criterion(output[0], target)
                 else:
-                    loss = criterion(output,[label,target])
+                    loss = criterion(output,[target,label])
 
 
-                cls_output = output[0]
+                cls_output = output[1]
                 cls_output = F.sigmoid(cls_output).float()
 
-                seg_output = output[1].float()
+                seg_output = output[0].float()
                 seg_output = F.softmax(seg_output, dim=1)
 
                 loss = loss.float()
@@ -458,10 +458,10 @@ class SemanticSeg(object):
 
                 output = net(data)
 
-                cls_output = output[0]
+                cls_output = output[1]
                 cls_output = F.sigmoid(cls_output).float()
 
-                seg_output = output[1].float()
+                seg_output = output[0].float()
                 seg_output = F.softmax(seg_output, dim=1)
 
                 # measure acc
@@ -516,6 +516,19 @@ class SemanticSeg(object):
         elif net_name == 'er_unet':
             from model.unet import unet
             net = unet(n_channels=self.channels, n_classes=self.num_classes, cls_location='end',revise=True)
+        
+        elif net_name == 'resUnet18':
+            from model.resUnet import ResUNet18
+            net = ResUNet18(n_channels=self.channels,n_classes=self.num_classes)
+
+        elif net_name == 'resUnet34':
+            from model.resUnet import ResUNet34
+            net = ResUNet34(n_channels=self.channels,n_classes=self.num_classes)
+
+        elif net_name == 'resUnet50':
+            from model.resUnet import ResUNet50
+            net = ResUNet50(n_channels=self.channels,n_classes=self.num_classes)
+            
         return net
 
     def _get_loss(self, loss_fun, class_weight=None):

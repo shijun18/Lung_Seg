@@ -29,10 +29,10 @@ class BCEPlusDice(nn.Module):
         assert len(predict) == len(target) and len(predict) == 2
 
         dice = DiceLoss(weight=self.weight,ignore_index=self.ignore_index,**self.kwargs)
-        dice_loss = dice(predict[1],target[1])
+        dice_loss = dice(predict[0],target[0])
 
         bce = nn.BCEWithLogitsLoss(self.weight)
-        bce_loss = bce(predict[0],target[0])
+        bce_loss = bce(predict[1],target[1])
         
         total_loss = bce_loss + dice_loss
 

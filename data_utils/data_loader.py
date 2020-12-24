@@ -54,12 +54,8 @@ class CropResize(object):
         mask = sample['mask']
         # crop
         if self.crop != 0:
-            if len(image.shape) > 2:
-                image = image[:,self.crop:-self.crop, self.crop:-self.crop]
-                mask = mask[:,self.crop:-self.crop, self.crop:-self.crop]
-            else:
-                image = image[self.crop:-self.crop, self.crop:-self.crop]
-                mask = mask[self.crop:-self.crop, self.crop:-self.crop]
+            image = image[self.crop:-self.crop, self.crop:-self.crop]
+            mask = mask[self.crop:-self.crop, self.crop:-self.crop]
         # resize
         if self.dim is not None and image.shape != self.dim:
             image = resize(image, self.dim, anti_aliasing=True)
