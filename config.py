@@ -23,14 +23,14 @@ json_path = {
 }
     
 DISEASE = 'Covid-Seg' 
-MODE = 'seg'
+MODE = 'cls'
 NET_NAME = 'deeplabv3plus_resnet18'
 VERSION = 'v8.3-half'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '5'
+DEVICE = '0'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False

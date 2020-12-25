@@ -157,28 +157,64 @@ class UNet(nn.Module):
 
 
 
-def unet(**kwargs):
+def m_unet(**kwargs):
     return UNet(stem=DoubleConv2D,
                 down=Down2D,
                 up=Up2D,
                 tail=Tail2D,
                 width=[64,128,256,512,1024],
                 conv_builder=DoubleConv2D,
+                cls_location='middle',
+                **kwargs)
+
+
+def mr_unet(**kwargs):
+    return UNet(stem=DoubleConv2D,
+                down=Down2D,
+                up=Up2D,
+                tail=Tail2D,
+                width=[64,128,256,512,1024],
+                conv_builder=DoubleConv2D,
+                cls_location='middle',
+                revise=True,
+                **kwargs)
+
+
+def e_unet(**kwargs):
+    return UNet(stem=DoubleConv2D,
+                down=Down2D,
+                up=Up2D,
+                tail=Tail2D,
+                width=[64,128,256,512,1024],
+                conv_builder=DoubleConv2D,
+                cls_location='end',
+                **kwargs)
+
+
+def er_unet(**kwargs):
+    return UNet(stem=DoubleConv2D,
+                down=Down2D,
+                up=Up2D,
+                tail=Tail2D,
+                width=[64,128,256,512,1024],
+                conv_builder=DoubleConv2D,
+                cls_location='end',
+                revise=True,
                 **kwargs)
 
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
   
-  net = unet(n_channels=1, n_classes=2, bilinear=True, revise=True)
+#   net = m_unet(n_channels=1, n_classes=2)
 
 
-  from torchsummary import summary
-  import os 
-  os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-#   summary(net,input_size=(1,512,512),batch_size=1,device='cuda')
-  summary(net.cuda(),input_size=(1,256,256),batch_size=1,device='cuda')
-  import sys
-  sys.path.append('..')
-  from utils import count_params_and_macs
-  count_params_and_macs(net.cuda(),(1,1,256,256))
+#   from torchsummary import summary
+#   import os 
+#   os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# #   summary(net,input_size=(1,512,512),batch_size=1,device='cuda')
+#   summary(net.cuda(),input_size=(1,256,256),batch_size=1,device='cuda')
+#   import sys
+#   sys.path.append('..')
+#   from utils import count_params_and_macs
+#   count_params_and_macs(net.cuda(),(1,1,256,256))

@@ -504,18 +504,9 @@ class SemanticSeg(object):
 
 
     def _get_net(self, net_name):
-        if net_name == 'm_unet':
-            from model.unet import unet
-            net = unet(n_channels=self.channels, n_classes=self.num_classes, cls_location='middle')
-        elif net_name == 'mr_unet':
-            from model.unet import unet
-            net = unet(n_channels=self.channels, n_classes=self.num_classes, cls_location='middle',revise=True)
-        elif net_name == 'e_unet':
-            from model.unet import unet
-            net = unet(n_channels=self.channels, n_classes=self.num_classes, cls_location='end')
-        elif net_name == 'er_unet':
-            from model.unet import unet
-            net = unet(n_channels=self.channels, n_classes=self.num_classes, cls_location='end',revise=True)
+        if net_name.endwith('_unet'):
+            from model import unet
+            net = unet.__dict__[net_name](n_channels=self.channels,n_classes=self.num_classes)    
 
         elif net_name.startswith('ResUNet'):
             from model import resUnet
