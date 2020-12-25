@@ -56,14 +56,15 @@ def count_params_and_macs(net,input_shape):
 def get_weight_path(ckpt_path):
 
     if os.path.isdir(ckpt_path):
-        pth_list = glob.glob(os.path.join(ckpt_path,'*.pth'))
+        pth_list = os.listdir(ckpt_path)
         if len(pth_list) != 0:
             pth_list.sort(key=lambda x:int(x.split('-')[0].split(':')[-1]))
-            return pth_list[-1]
+            return os.path.join(ckpt_path,pth_list[-1])
         else:
             return None
     else:
         return None
+    
     
 
 def remove_weight_path(ckpt_path,retain=5):

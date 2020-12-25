@@ -116,8 +116,9 @@ class SemanticSeg(object):
         torch.cuda.manual_seed_all(1000)
         print('Device:{}'.format(self.device))
         torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.enabled = True
+        torch.backends.cudnn.enabled = False
         torch.backends.cudnn.benchmark = True
+
 
         output_dir = os.path.join(output_dir, "fold" + str(cur_fold))
         log_dir = os.path.join(log_dir, "fold" + str(cur_fold))
@@ -504,7 +505,7 @@ class SemanticSeg(object):
 
 
     def _get_net(self, net_name):
-        if net_name.endwith('_unet'):
+        if '_unet' in net_name:
             from model import unet
             net = unet.__dict__[net_name](n_channels=self.channels,n_classes=self.num_classes)    
 
@@ -532,7 +533,9 @@ class SemanticSeg(object):
         elif loss_fun == 'DiceLoss':
             from loss.dice_loss import DiceLoss
             loss = DiceLoss(weight=class_weight, ignore_index=0, p=1)
-        
+        elif loss_fun == 'ShiftDiceLoss':
+            from loss.dice_loss import ShiftDiceLoss
+            loss = ShiftDiceLoss(weight=class_weight,ignore_index=0, reduction='topk',shift=0.5, p=1, k=self.topk)
         elif loss_fun == 'TopkDiceLoss':
             from loss.dice_loss import DiceLoss
             loss = DiceLoss(weight=class_weight, ignore_index=0,reduction='topk', k=self.topk)
@@ -571,6 +574,10 @@ class SemanticSeg(object):
         elif loss_fun == 'TopkCEPlusDice':
             from loss.combine_loss import TopkCEPlusDice
             loss = TopkCEPlusDice(weight=class_weight, ignore_index=0, k=self.topk)
+        
+        elif loss_fun == 'TopkCEPlusShiftDice':
+            from loss.combine_loss import TopkCEPlusShiftDice
+            loss = TopkCEPlusShiftDice(weight=class_weight,ignore_index=0, reduction='topk',shift=0.5,k=self.topk)
         return loss
 
     def _get_optimizer(self, optimizer, net, lr):
@@ -655,7 +662,7 @@ def binary_dice(predict, target, smooth=1e-5):
     return dice.mean()
 
 
-def compute_dice(predict, target, ignore_index=0):
+def compute_dice(predict, target, ignore_index=0, shift=0.5):
     """
     Compute dice
     Args:
@@ -666,6 +673,12 @@ def compute_dice(predict, target, ignore_index=0):
         mean dice over the batch
     """
     assert predict.shape == target.shape, 'predict & target shape do not match'
+
+    predict_shift = F.relu(predict-shift)
+    alpha = predict / (predict-shift)
+    alpha_relu = F.relu(alpha)
+    predict = predict_shift * alpha_relu
+
     total_dice = 0.
     dice_list = []
     for i in range(target.shape[1]):

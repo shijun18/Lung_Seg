@@ -83,3 +83,45 @@ class DiceLoss(nn.Module):
             return total_loss/(target.shape[1] - 1)
         else:
             return total_loss/target.shape[1]
+
+
+class ShiftDiceLoss(nn.Module):
+    """Dice loss with shift, need one hot encode input
+    Args:
+        weight: An array of shape [num_classes,]
+        ignore_index: class index to ignore
+        predict: A tensor of shape [N, C, *]
+        target: A tensor of same shape with predict
+        other args pass to BinaryDiceLoss
+    Return:
+        same as BinaryDiceLoss
+    """
+    def __init__(self, weight=None, ignore_index=None, shift=0.5, **kwargs):
+        super(ShiftDiceLoss, self).__init__()
+        self.kwargs = kwargs
+        self.class_weight = weight
+        self.ignore_index = ignore_index
+        self.shift = shift
+
+    def forward(self, predict, target):
+        assert predict.shape == target.shape, 'predict & target shape do not match'
+        dice = BinaryDiceLoss(**self.kwargs)
+        total_loss = 0
+        predict = F.softmax(predict, dim=1)
+        predict_shift = F.relu(predict-self.shift)
+        alpha = predict / (predict-self.shift)
+        alpha_relu = F.relu(alpha)
+        predict = predict_shift * alpha_relu
+        
+        for i in range(target.shape[1]):
+            if i != self.ignore_index:
+                dice_loss = dice(predict[:, i], target[:, i])
+                if self.class_weight is not None:
+                    assert  self.class_weight.shape[0] == target.shape[1], \
+                        'Expect weight shape [{}], get[{}]'.format(target.shape[1],  self.class_weight.shape[0])
+                    dice_loss *=  self.class_weight[i]
+                total_loss += dice_loss
+        if self.ignore_index is not None:
+            return total_loss/(target.shape[1] - 1)
+        else:
+            return total_loss/target.shape[1]

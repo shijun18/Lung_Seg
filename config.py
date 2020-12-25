@@ -23,17 +23,17 @@ json_path = {
 }
     
 DISEASE = 'Covid-Seg' 
-MODE = 'cls'
+MODE = 'seg'
 NET_NAME = 'deeplabv3plus_resnet18'
-VERSION = 'v8.3-half'
+VERSION = 'v8.4-half'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '0'
+DEVICE = '2'
 # Must be True when pre-training and inference
-PRE_TRAINED = False 
-CKPT_POINT = False
+PRE_TRAINED = True 
+CKPT_POINT = True
 # 1,2,...,8
 CURRENT_FOLD = 1
 GPU_NUM = len(DEVICE.split(','))
@@ -93,11 +93,11 @@ INIT_TRAINER = {
   'milestones': [40,80],
   'T_max':5,
   'mode':MODE,
-  'topk':50
+  'topk':70
  }
 #---------------------------------
 
-__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
+__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','TopkCEPlusShiftDice','ShiftDiceLoss','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
 __cls_loss__ = ['BCEWithLogitsLoss']
 __mtl_loss__ = ['BCEPlusDice']
 # Arguments when perform the trainer 
@@ -105,7 +105,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'TopkCEPlusDice'
+    LOSS_FUN = 'TopkCEPlusShiftDice'
 else:
     LOSS_FUN = 'BCEPlusDice'
 
