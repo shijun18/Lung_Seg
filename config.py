@@ -22,18 +22,18 @@ json_path = {
     'EGFR':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/EGFR.json',
 }
     
-DISEASE = 'Covid-Seg' 
+DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'deeplabv3plus_resnet18'
-VERSION = 'v8.4-half'
+VERSION = 'v8.3-zero'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '2'
+DEVICE = '4'
 # Must be True when pre-training and inference
-PRE_TRAINED = True 
-CKPT_POINT = True
+PRE_TRAINED = False 
+CKPT_POINT = False
 # 1,2,...,8
 CURRENT_FOLD = 1
 GPU_NUM = len(DEVICE.split(','))
@@ -52,12 +52,12 @@ SCALE = info['scale'][ROI_NAME]
 #---------------------------------
 
 #--------------------------------- mode and data path setting
-#zero
-# PATH_LIST = glob.glob(os.path.join(info['2d_data']['save_path'],'*.hdf5'))
 #all
-# PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
+# PATH_LIST = glob.glob(os.path.join(info['2d_data']['save_path'],'*.hdf5'))
+#zero
+PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
 #half
-PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
+# PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
 #---------------------------------
 
 
@@ -97,7 +97,7 @@ INIT_TRAINER = {
  }
 #---------------------------------
 
-__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','TopkCEPlusShiftDice','ShiftDiceLoss','PowDiceLoss','Cross_Entropy','TopkDiceLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
+__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','TopkCEPlusTopkShiftDice','TopkCEPlusShiftDice','PowDiceLoss','Cross_Entropy','TopkDiceLoss','DynamicTopKLoss','DynamicTopkCEPlusDice','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
 __cls_loss__ = ['BCEWithLogitsLoss']
 __mtl_loss__ = ['BCEPlusDice']
 # Arguments when perform the trainer 
@@ -105,7 +105,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'TopkCEPlusShiftDice'
+    LOSS_FUN = 'TopkCEPlusDice'
 else:
     LOSS_FUN = 'BCEPlusDice'
 

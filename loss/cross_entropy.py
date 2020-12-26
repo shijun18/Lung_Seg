@@ -41,3 +41,24 @@ class TopKLoss(CrossentropyLoss):
         num_voxels = np.prod(res.shape)
         res, _ = torch.topk(res.view((-1, )), int(num_voxels * self.k / 100), sorted=False)
         return res.mean()
+
+
+class DynamicTopKLoss(CrossentropyLoss):
+
+    def __init__(self, weight=None, ignore_index=-100, step_threshold=1000, reduction=None):
+        self.k = 100
+        self.step = 0
+        self.step_threshold = step_threshold
+        super(DynamicTopKLoss, self).__init__(weight, False, ignore_index, reduce=False)
+        
+    def forward(self, inp, target):
+        # target = target[:, 0].long()
+        res = super(DynamicTopKLoss, self).forward(inp, target)
+        num_voxels = np.prod(res.shape)
+        res, _ = torch.topk(res.view((-1, )), int(num_voxels * self.k / 100), sorted=False)
+        self.step += 1
+
+        if self.step % self.step_threshold == 0:
+            self.k -= 0.5
+        
+        return res.mean()

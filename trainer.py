@@ -525,6 +525,13 @@ class SemanticSeg(object):
         if loss_fun == 'Cross_Entropy':
             from loss.cross_entropy import CrossentropyLoss
             loss = CrossentropyLoss(weight=class_weight)
+        if loss_fun == 'DynamicTopKLoss':
+            from loss.cross_entropy import DynamicTopKLoss
+            loss = DynamicTopKLoss(weight=class_weight,step_threshold=100)
+        
+        elif loss_fun == 'DynamicTopkCEPlusDice':
+            from loss.combine_loss import DynamicTopkCEPlusDice
+            loss = DynamicTopkCEPlusDice(weight=class_weight, ignore_index=0, step_threshold=100)
         
         elif loss_fun == 'TopKLoss':
             from loss.cross_entropy import TopKLoss
@@ -577,7 +584,12 @@ class SemanticSeg(object):
         
         elif loss_fun == 'TopkCEPlusShiftDice':
             from loss.combine_loss import TopkCEPlusShiftDice
-            loss = TopkCEPlusShiftDice(weight=class_weight,ignore_index=0, reduction='topk',shift=0.5,k=self.topk)
+            loss = TopkCEPlusShiftDice(weight=class_weight,ignore_index=0, shift=0.5,k=self.topk)
+        
+        elif loss_fun == 'TopkCEPlusTopkShiftDice':
+            from loss.combine_loss import TopkCEPlusTopkShiftDice
+            loss = TopkCEPlusTopkShiftDice(weight=class_weight,ignore_index=0, reduction='topk',shift=0.5,k=self.topk)
+        
         return loss
 
     def _get_optimizer(self, optimizer, net, lr):
@@ -687,7 +699,7 @@ def compute_dice(predict, target, ignore_index=0, shift=0.5):
             # print(dice)
             total_dice += dice
             dice_list.append(round(dice.item(),4))
-    print(dice_list)
+    # print(dice_list)
 
     if ignore_index is not None:
         return total_dice / (target.shape[1] - 1)

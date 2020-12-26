@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from loss.dice_loss import DiceLoss,ShiftDiceLoss
-from loss.cross_entropy import  CrossentropyLoss, TopKLoss
+from loss.cross_entropy import  CrossentropyLoss, TopKLoss, DynamicTopKLoss
 
 class BCEPlusDice(nn.Module):
     """Dice loss, need one hot encode input
@@ -157,7 +157,7 @@ class TopkCEPlusTopkDice(nn.Module):
         dice = DiceLoss(weight=self.weight,ignore_index=self.ignore_index,**self.kwargs)
         dice_loss = dice(predict,target)
 
-        topk = TopKLoss(weight=self.weight,k=50)
+        topk = TopKLoss(weight=self.weight,**self.kwargs)
         topk_loss = topk(predict,target)
         
         total_loss = topk_loss + dice_loss
@@ -190,6 +190,70 @@ class TopkCEPlusShiftDice(nn.Module):
         dice_loss = dice(predict,target)
 
         topk = TopKLoss(weight=self.weight,**self.kwargs)
+        topk_loss = topk(predict,target)
+        
+        total_loss = topk_loss + dice_loss
+
+        return total_loss
+
+
+class TopkCEPlusTopkShiftDice(nn.Module):
+    """Dice loss, need one hot encode input
+    Args:
+        weight: An array of shape [num_classes,]
+        ignore_index: class index to ignore
+        predict: A list of two tensors
+        target: A list of two tensors
+        other args pass to BinaryDiceLoss
+    Return:
+        combination loss, dice plus topk cross entropy 
+    """
+    def __init__(self, weight=None, shift=0.5, ignore_index=None, **kwargs):
+        super(TopkCEPlusTopkShiftDice, self).__init__()
+        self.kwargs = kwargs
+        self.weight = weight
+        self.shift = shift
+        self.ignore_index = ignore_index
+        
+    def forward(self, predict, target):
+
+        assert predict.size() == target.size()
+        dice = ShiftDiceLoss(weight=self.weight,shift=self.shift,ignore_index=self.ignore_index,**self.kwargs)
+        dice_loss = dice(predict,target)
+
+        topk = TopKLoss(weight=self.weight,**self.kwargs)
+        topk_loss = topk(predict,target)
+        
+        total_loss = topk_loss + dice_loss
+
+        return total_loss
+
+
+
+class DynamicTopkCEPlusDice(nn.Module):
+    """Dice loss, need one hot encode input
+    Args:
+        weight: An array of shape [num_classes,]
+        ignore_index: class index to ignore
+        predict: A list of two tensors
+        target: A list of two tensors
+        other args pass to BinaryDiceLoss
+    Return:
+        combination loss, dice plus topk cross entropy 
+    """
+    def __init__(self, weight=None, ignore_index=None, **kwargs):
+        super(DynamicTopkCEPlusDice, self).__init__()
+        self.kwargs = kwargs
+        self.weight = weight
+        self.ignore_index = ignore_index
+        
+    def forward(self, predict, target):
+
+        assert predict.size() == target.size()
+        dice = DiceLoss(weight=self.weight,ignore_index=self.ignore_index,**self.kwargs)
+        dice_loss = dice(predict,target)
+
+        topk = DynamicTopKLoss(weight=self.weight,**self.kwargs)
         topk_loss = topk(predict,target)
         
         total_loss = topk_loss + dice_loss
