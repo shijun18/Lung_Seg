@@ -358,3 +358,18 @@ def deeplabv3plus_mobilenet(n_classes=2, output_stride=8, pretrained_backbone=Fa
     """
     return _load_model('deeplabv3plus', 'mobilenetv2', num_classes=n_classes, output_stride=output_stride, pretrained_backbone=pretrained_backbone, **kwargs)
 
+
+
+# if __name__ == "__main__":
+  
+#   net = deeplabv3plus_resnet18(n_channels=1, n_classes=2)
+
+
+#   from torchsummary import summary
+#   import os 
+#   os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+# #   summary(net,input_size=(1,512,512),batch_size=1,device='cuda')
+#   summary(net.cuda(),input_size=(1,256,256),batch_size=1,device='cuda')
+
+#   from utils import count_params_and_macs
+#   count_params_and_macs(net.cuda(),(1,1,256,256))

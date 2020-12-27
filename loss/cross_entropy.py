@@ -45,9 +45,10 @@ class TopKLoss(CrossentropyLoss):
 
 class DynamicTopKLoss(CrossentropyLoss):
 
-    def __init__(self, weight=None, ignore_index=-100, step_threshold=1000, reduction=None):
+    def __init__(self, weight=None, ignore_index=-100, step_threshold=1000, min_k=20, reduction=None):
         self.k = 100
         self.step = 0
+        self.min_k = min_k
         self.step_threshold = step_threshold
         super(DynamicTopKLoss, self).__init__(weight, False, ignore_index, reduce=False)
         
@@ -58,7 +59,7 @@ class DynamicTopKLoss(CrossentropyLoss):
         res, _ = torch.topk(res.view((-1, )), int(num_voxels * self.k / 100), sorted=False)
         self.step += 1
 
-        if self.step % self.step_threshold == 0:
-            self.k -= 0.5
+        if self.step % self.step_threshold == 0 and self.k > self.min_k:
+            self.k -= 1
         
         return res.mean()

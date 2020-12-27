@@ -23,16 +23,16 @@ json_path = {
 }
     
 DISEASE = 'Lung_Tumor' 
-MODE = 'seg'
+MODE = 'cls'
 NET_NAME = 'deeplabv3plus_resnet18'
-VERSION = 'v8.3-zero'
+VERSION = 'v8.3-half'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '4'
+DEVICE = '5'
 # Must be True when pre-training and inference
-PRE_TRAINED = False 
+PRE_TRAINED = True 
 CKPT_POINT = False
 # 1,2,...,8
 CURRENT_FOLD = 1
@@ -54,10 +54,16 @@ SCALE = info['scale'][ROI_NAME]
 #--------------------------------- mode and data path setting
 #all
 # PATH_LIST = glob.glob(os.path.join(info['2d_data']['save_path'],'*.hdf5'))
+# PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/EGFR/2d_data','*.hdf5')))
+# PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/Covid-Seg/2d_data','*.hdf5')))
 #zero
-PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
+# PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
+# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
+# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,))
 #half
-# PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
+PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
+PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion',ratio=0.5))
+PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,ratio=0.5))
 #---------------------------------
 
 
@@ -93,7 +99,8 @@ INIT_TRAINER = {
   'milestones': [40,80],
   'T_max':5,
   'mode':MODE,
-  'topk':70
+  'topk':70,
+  'freeze':None,
  }
 #---------------------------------
 
@@ -105,7 +112,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'TopkCEPlusDice'
+    LOSS_FUN = 'DynamicTopKLoss'
 else:
     LOSS_FUN = 'BCEPlusDice'
 

@@ -58,7 +58,8 @@ class SemanticSeg(object):
                  milestones=[40, 80],
                  T_max=5,
                  mode='cls',
-                 topk=10):
+                 topk=10,
+                 freeze=None):
         super(SemanticSeg, self).__init__()
 
         self.net_name = net_name
@@ -90,6 +91,7 @@ class SemanticSeg(object):
 
         self.mode = mode
         self.topk = topk
+        self.freeze = freeze
 
         os.environ['CUDA_VISIBLE_DEVICES'] = self.device
 
@@ -116,7 +118,7 @@ class SemanticSeg(object):
         torch.cuda.manual_seed_all(1000)
         print('Device:{}'.format(self.device))
         torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.enabled = False
+        torch.backends.cudnn.enabled = True
         torch.backends.cudnn.benchmark = True
 
 
@@ -142,6 +144,14 @@ class SemanticSeg(object):
             len(train_path[0]) / self.batch_size)
 
         net = self.net
+
+        # only for deeplab
+        if self.freeze is not None and 'deeplab' in self.net_name:
+            if self.freeze == 'backbone':
+                net.freeze_backbone()
+            elif self.freeze == 'classifier':
+                net.freeze_classifier()
+
         lr = self.lr
         loss = self._get_loss(loss_fun, class_weight)
 
@@ -429,7 +439,7 @@ class SemanticSeg(object):
                                     transform=test_transformer)
 
         test_loader = DataLoader(test_dataset,
-                                batch_size=1,
+                                batch_size=20,
                                 shuffle=False,
                                 num_workers=self.num_workers,
                                 pin_memory=True)
@@ -451,7 +461,7 @@ class SemanticSeg(object):
                 data = sample['image']
                 target = sample['mask']
                 label = sample['label'] #N*C
-                print(label)
+                # print(label)
 
                 data = data.cuda()
                 target = target.cuda()
@@ -472,12 +482,11 @@ class SemanticSeg(object):
                 # measure dice and iou for evaluation (float)
                 dice = compute_dice(seg_output.detach(), target, ignore_index=0)
                 test_dice.update(dice.item(), data.size(0))
-                
                 cls_result['prob'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
                 cls_output = (cls_output > 0.5).float() # N*C
                 cls_result['pred'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
                 cls_result['true'].extend(label.detach().squeeze().cpu().numpy().tolist())
-                print(cls_output.detach())
+                # print(cls_output.detach())
                 if mode == 'mtl':
                     b, c, _, _ = seg_output.size()
                     seg_output[:,1:,...] = seg_output[:,1:,...] * cls_output.view(b,c-1,1,1).expand_as(seg_output[:,1:,...])
@@ -485,12 +494,12 @@ class SemanticSeg(object):
                 seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W N=1
                 target = torch.argmax(target,1).detach().cpu().numpy()
                 run_dice.update_matrix(target,seg_output)
-                print(np.unique(seg_output),np.unique(target))
+                # print(np.unique(seg_output),np.unique(target))
 
                 # save
                 if mode != 'cls' and save_flag:
                     seg_output = np.squeeze(seg_output).astype(np.uint8) 
-                    seg_output = Image.fromarray(seg_output, mode='P')
+                    seg_output = Image.fromarray(seg_output, mode='L')
                     seg_output.save(os.path.join(save_path,test_path[step].split('.')[0] + mode +'.png'))
 
                 torch.cuda.empty_cache()
@@ -527,7 +536,7 @@ class SemanticSeg(object):
             loss = CrossentropyLoss(weight=class_weight)
         if loss_fun == 'DynamicTopKLoss':
             from loss.cross_entropy import DynamicTopKLoss
-            loss = DynamicTopKLoss(weight=class_weight,step_threshold=100)
+            loss = DynamicTopKLoss(weight=class_weight,step_threshold=500)
         
         elif loss_fun == 'DynamicTopkCEPlusDice':
             from loss.combine_loss import DynamicTopkCEPlusDice
@@ -594,13 +603,14 @@ class SemanticSeg(object):
 
     def _get_optimizer(self, optimizer, net, lr):
         if optimizer == 'Adam':
-            optimizer = torch.optim.Adam(net.parameters(),
+            optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, net.parameters()),
                                          lr=lr,
                                          weight_decay=self.weight_decay)
 
         elif optimizer == 'SGD':
-            optimizer = torch.optim.SGD(net.parameters(),
+            optimizer = torch.optim.SGD(filter(lambda p: p.requires_grad, net.parameters()),
                                         lr=lr,
+                                        weight_decay=self.weight_decay,
                                         momentum=self.momentum)
 
         return optimizer

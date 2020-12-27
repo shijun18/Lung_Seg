@@ -24,6 +24,20 @@ class _SimpleSegmentationModel(nn.Module):
         x = F.interpolate(x, size=input_shape, mode='bilinear', align_corners=False)
         return (x,cls_result)
         # return x
+    
+    def freeze_part(self,part):
+        for name, child in part.named_children():
+            for param in child.parameters():
+                param.requires_grad = False
+            self.freeze_part(child)
+
+    def freeze_backbone(self): 
+        self.freeze_part(self.backbone)   
+
+    def freeze_classifer(self):
+        self.freeze_part(self.classifier)  
+
+    
 
 
 class IntermediateLayerGetter(nn.ModuleDict):

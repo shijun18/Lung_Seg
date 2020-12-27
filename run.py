@@ -56,7 +56,9 @@ if __name__ == "__main__":
         segnetwork = SemanticSeg(**INIT_TRAINER)
         print(get_parameter_number(segnetwork.net))
     path_list = PATH_LIST
-    path_list.sort()
+    random.seed(666)
+    random.shuffle(path_list)
+    # path_list.sort()
     # Training
     ###############################################
     if args.mode == 'train_cross_val':
