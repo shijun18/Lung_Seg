@@ -250,7 +250,7 @@ class DynamicTopkCEPlusDice(nn.Module):
     def forward(self, predict, target):
 
         assert predict.size() == target.size()
-        dice = DiceLoss(weight=self.weight,ignore_index=self.ignore_index,**self.kwargs)
+        dice = DiceLoss(weight=self.weight,ignore_index=self.ignore_index)
         dice_loss = dice(predict,target)
 
         topk = DynamicTopKLoss(weight=self.weight,**self.kwargs)

@@ -7,10 +7,43 @@ from PIL import Image
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
-from config import INIT_TRAINER, SETUP_TRAINER, CURRENT_FOLD, PATH_LIST, FOLD_NUM, ROI_NAME
+from config import INIT_TRAINER, SETUP_TRAINER, CURRENT_FOLD, PATH_LIST, FOLD_NUM, ROI_NAME,TEST_PATH
 from config import VERSION, ROI_NAME, DISEASE, MODE
 import time
 
+def get_cross_validation_by_sample(path_list, fold_num, current_fold):
+
+    sample_list = list(set([os.path.basename(case).split('_')[0] for case in path_list]))
+    # print(len(sample_list))
+    random.seed(666)
+    random.shuffle(sample_list)
+    _len_ = len(sample_list) // fold_num
+
+    train_id = []
+    validation_id = []
+    end_index = current_fold * _len_
+    start_index = end_index - _len_
+    if current_fold == fold_num:
+        validation_id.extend(sample_list[start_index:])
+        train_id.extend(sample_list[:start_index])
+    else:
+        validation_id.extend(sample_list[start_index:end_index])
+        train_id.extend(sample_list[:start_index])
+        train_id.extend(sample_list[end_index:])
+
+    train_path = []
+    validation_path = []
+    for case in path_list:
+        if os.path.basename(case).split('_')[0] in train_id:
+            train_path.append(case)
+        else:
+            validation_path.append(case)
+
+    random.shuffle(train_path)
+    random.shuffle(validation_path)
+    print("Train set length ", len(train_path),
+          "Val set length", len(validation_path))
+    return train_path, validation_path
 
 def get_cross_validation(path_list, fold_num, current_fold):
 
@@ -56,18 +89,17 @@ if __name__ == "__main__":
         segnetwork = SemanticSeg(**INIT_TRAINER)
         print(get_parameter_number(segnetwork.net))
     path_list = PATH_LIST
-    random.seed(666)
-    random.shuffle(path_list)
+    # random.seed(666)
+    # random.shuffle(path_list)
     # path_list.sort()
     # Training
     ###############################################
     if args.mode == 'train_cross_val':
-        path_list = path_list[:int(len(path_list) * 0.8)]
         for current_fold in range(1, FOLD_NUM + 1):
             print("=== Training Fold ", current_fold, " ===")
             segnetwork = SemanticSeg(**INIT_TRAINER)
             print(get_parameter_number(segnetwork.net))
-            train_path, val_path = get_cross_validation(path_list, FOLD_NUM, current_fold)
+            train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, current_fold)
             SETUP_TRAINER['train_path'] = train_path
             SETUP_TRAINER['val_path'] = val_path
             SETUP_TRAINER['cur_fold'] = current_fold
@@ -78,8 +110,7 @@ if __name__ == "__main__":
 
 
     if args.mode == 'train':
-        path_list = path_list[:int(len(path_list) * 0.8)]
-        train_path, val_path = get_cross_validation(path_list, FOLD_NUM, CURRENT_FOLD)
+        train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, CURRENT_FOLD)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['cur_fold'] = CURRENT_FOLD
@@ -94,7 +125,7 @@ if __name__ == "__main__":
     ###############################################
     if args.mode == 'test':
         start_time = time.time()
-        test_path = path_list[int(len(path_list) * 0.8):]
+        test_path = TEST_PATH
         print("test set len:",len(test_path))
 
         save_path = './analysis/result/{}/{}/{}'.format(DISEASE,VERSION,MODE)

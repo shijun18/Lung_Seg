@@ -138,7 +138,7 @@ class SemanticSeg(object):
                 os.makedirs(output_dir)
         else:
             os.makedirs(output_dir)
-
+        self.step_pre_epoch = len(train_path) // self.batch_size
         self.writer = SummaryWriter(log_dir)
         self.global_step = self.start_epoch * math.ceil(
             len(train_path[0]) / self.batch_size)
@@ -536,11 +536,11 @@ class SemanticSeg(object):
             loss = CrossentropyLoss(weight=class_weight)
         if loss_fun == 'DynamicTopKLoss':
             from loss.cross_entropy import DynamicTopKLoss
-            loss = DynamicTopKLoss(weight=class_weight,step_threshold=500)
+            loss = DynamicTopKLoss(weight=class_weight,step_threshold=self.step_pre_epoch)
         
         elif loss_fun == 'DynamicTopkCEPlusDice':
             from loss.combine_loss import DynamicTopkCEPlusDice
-            loss = DynamicTopkCEPlusDice(weight=class_weight, ignore_index=0, step_threshold=100)
+            loss = DynamicTopkCEPlusDice(weight=class_weight, ignore_index=0, step_threshold=self.step_pre_epoch)
         
         elif loss_fun == 'TopKLoss':
             from loss.cross_entropy import TopKLoss

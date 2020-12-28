@@ -23,14 +23,14 @@ json_path = {
 }
     
 DISEASE = 'Lung_Tumor' 
-MODE = 'cls'
+MODE = 'seg'
 NET_NAME = 'deeplabv3plus_resnet18'
-VERSION = 'v8.3-half'
+VERSION = 'v8.4-zero-triple'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '5'
+DEVICE = '1'
 # Must be True when pre-training and inference
 PRE_TRAINED = True 
 CKPT_POINT = False
@@ -57,13 +57,13 @@ SCALE = info['scale'][ROI_NAME]
 # PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/EGFR/2d_data','*.hdf5')))
 # PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/Covid-Seg/2d_data','*.hdf5')))
 #zero
-# PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
-# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
-# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,))
+PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
+PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
+PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,))
 #half
-PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
-PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion',ratio=0.5))
-PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,ratio=0.5))
+# PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
+# PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion',ratio=0.5))
+# PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,ratio=0.5))
 #---------------------------------
 
 
@@ -71,7 +71,7 @@ PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Me
 INPUT_SHAPE = (256,256)
 BATCH_SIZE = 24
 
-# CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'cls', 'v1.0', ROI_NAME, str(1))
+# CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'seg', 'v8.3-zero', ROI_NAME, str(1))
 CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
 
 WEIGHT_PATH = get_weight_path(CKPT_PATH)
@@ -104,7 +104,7 @@ INIT_TRAINER = {
  }
 #---------------------------------
 
-__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','TopkCEPlusTopkShiftDice','TopkCEPlusShiftDice','PowDiceLoss','Cross_Entropy','TopkDiceLoss','DynamicTopKLoss','DynamicTopkCEPlusDice','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
+__seg_loss__ = ['DiceLoss','TverskyLoss','FocalTverskyLoss','TopkCEPlusDice','DynamicTopkCEPlusDice','TopkCEPlusTopkShiftDice','TopkCEPlusShiftDice','PowDiceLoss','Cross_Entropy','TopkDiceLoss','DynamicTopKLoss','TopKLoss','CEPlusDice','TopkCEPlusDice','CEPlusTopkDice','TopkCEPlusTopkDice']
 __cls_loss__ = ['BCEWithLogitsLoss']
 __mtl_loss__ = ['BCEPlusDice']
 # Arguments when perform the trainer 
@@ -112,7 +112,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'DynamicTopKLoss'
+    LOSS_FUN = 'DynamicTopkCEPlusDice'
 else:
     LOSS_FUN = 'BCEPlusDice'
 
@@ -125,3 +125,4 @@ SETUP_TRAINER = {
   'lr_scheduler':'CosineAnnealingLR', #'CosineAnnealingLR'
   }
 #---------------------------------
+TEST_PATH = None
