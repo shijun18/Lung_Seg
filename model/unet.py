@@ -71,7 +71,7 @@ class Up2D(nn.Module):
 class Tail2D(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(Tail2D, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=3,padding=1)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
 
     def forward(self, x):
         return self.conv(x)

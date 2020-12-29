@@ -24,15 +24,15 @@ json_path = {
     
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
-NET_NAME = 'deeplabv3plus_resnet18'
-VERSION = 'v8.4-zero-triple'
+NET_NAME = 'ResUNet50'
+VERSION = 'v7.4-zero'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '1'
+DEVICE = '0'
 # Must be True when pre-training and inference
-PRE_TRAINED = True 
+PRE_TRAINED = False 
 CKPT_POINT = False
 # 1,2,...,8
 CURRENT_FOLD = 1
@@ -58,8 +58,8 @@ SCALE = info['scale'][ROI_NAME]
 # PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/Covid-Seg/2d_data','*.hdf5')))
 #zero
 PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
-PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
-PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,))
+# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
+# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,))
 #half
 # PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
 # PATH_LIST.extend(get_path_with_annotation_ratio('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion',ratio=0.5))

@@ -202,7 +202,7 @@ class ResNet(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc(x)
 
-        return x
+        return x_down0, x_down1, x_down2, x_down3
 
 
 def _resnet(arch, block, layers, pretrained, progress, **kwargs):
