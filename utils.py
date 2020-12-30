@@ -26,7 +26,7 @@ def get_path_with_annotation(input_path,path_col,tag_col):
     return final_list
 
 
-def get_path_with_annotation_ratio(input_path,path_col,tag_col,ratio=0.5,reversed_flag=False):
+def get_path_with_annotation_ratio(input_path,path_col,tag_col,ratio=0.5):
     path_list = pd.read_csv(input_path)[path_col].values.tolist()
     tag_list = pd.read_csv(input_path)[tag_col].values.tolist()
     with_list = []
@@ -36,15 +36,9 @@ def get_path_with_annotation_ratio(input_path,path_col,tag_col,ratio=0.5,reverse
             with_list.append(path)
         else:
             without_list.append(path)
-    if reversed_flag:
-        if int(len(without_list)/ratio) < len(with_list):
-            random.shuffle(with_list)
-            with_list = with_list[:int(len(without_list)/ratio)]
-    else:
-        if int(len(with_list)/ratio) < len(without_list):
-            random.shuffle(without_list)
-            without_list = without_list[:int(len(with_list)/ratio)]    
-        
+    if int(len(with_list)/ratio) < len(without_list):
+        random.shuffle(without_list)
+        without_list = without_list[:int(len(with_list)/ratio)]    
     return with_list + without_list
 
 

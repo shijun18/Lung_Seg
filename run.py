@@ -15,8 +15,8 @@ def get_cross_validation_by_sample(path_list, fold_num, current_fold):
 
     sample_list = list(set([os.path.basename(case).split('_')[0] for case in path_list]))
     # print(len(sample_list))
-    random.seed(666)
-    random.shuffle(sample_list)
+    # random.seed(666)
+            
     _len_ = len(sample_list) // fold_num
 
     train_id = []

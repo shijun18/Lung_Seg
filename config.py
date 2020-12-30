@@ -24,8 +24,8 @@ json_path = {
     
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
-NET_NAME = 'ResUNet50'
-VERSION = 'v7.4-zero'
+NET_NAME = 'm_unet'
+VERSION = 'v1.4-zero-sample'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
