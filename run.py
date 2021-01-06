@@ -11,12 +11,43 @@ from config import INIT_TRAINER, SETUP_TRAINER, CURRENT_FOLD, PATH_LIST, FOLD_NU
 from config import VERSION, ROI_NAME, DISEASE, MODE
 import time
 
+
+VAL_SAMPLE = ['10446967','10682303','08676580','16674245','12786488','01472680','0009413103','30346866','17509127','16215626',\
+              '15189944','11921906','0008549664','0001900608','0009363417','17508083']
+
+def get_cross_validation_by_specificed(path_list, val_sample=None):
+
+    sample_list = list(set([os.path.basename(case).split('_')[0] for case in path_list]))
+    print('number of sample:',len(sample_list))
+    train_id = []
+    validation_id = []
+    for sample in sample_list:
+        if sample in val_sample:
+            validation_id.append(sample)
+        else:
+            train_id.append(sample)
+
+    train_path = []
+    validation_path = []
+    for case in path_list:
+        if os.path.basename(case).split('_')[0] in train_id:
+            train_path.append(case)
+        else:
+            validation_path.append(case)
+
+    random.shuffle(train_path)
+    random.shuffle(validation_path)
+    print("Train set length ", len(train_path),
+          "Val set length", len(validation_path))
+    return train_path, validation_path
+
+
+
 def get_cross_validation_by_sample(path_list, fold_num, current_fold):
 
     sample_list = list(set([os.path.basename(case).split('_')[0] for case in path_list]))
     # print(len(sample_list))
-    # random.seed(666)
-            
+    sample_list.sort()        
     _len_ = len(sample_list) // fold_num
 
     train_id = []
@@ -89,9 +120,6 @@ if __name__ == "__main__":
         segnetwork = SemanticSeg(**INIT_TRAINER)
         print(get_parameter_number(segnetwork.net))
     path_list = PATH_LIST
-    # random.seed(666)
-    # random.shuffle(path_list)
-    # path_list.sort()
     # Training
     ###############################################
     if args.mode == 'train_cross_val':
@@ -110,7 +138,8 @@ if __name__ == "__main__":
 
 
     if args.mode == 'train':
-        train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, CURRENT_FOLD)
+        # train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, CURRENT_FOLD)
+        train_path, val_path = get_cross_validation_by_specificed(path_list, VAL_SAMPLE)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['cur_fold'] = CURRENT_FOLD

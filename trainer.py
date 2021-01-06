@@ -683,7 +683,7 @@ def binary_dice(predict, target, smooth=1e-5):
 
     return dice.mean()
 
-
+'''
 def compute_dice(predict, target, ignore_index=0, shift=0.5):
     """
     Compute dice
@@ -715,8 +715,37 @@ def compute_dice(predict, target, ignore_index=0, shift=0.5):
         return total_dice / (target.shape[1] - 1)
     else:
         return total_dice / target.shape[1]
+'''
+def compute_dice(predict,target,ignore_index=0):
+    """
+    Compute dice
+    Args:
+        predict: A tensor of shape [N, C, *]
+        target: A tensor of same shape with predict
+        ignore_index: class index to ignore
+    Return:
+        mean dice over the batch
+    """
+    assert predict.shape == target.shape, 'predict & target shape do not match'
+    total_dice = 0.
+    predict = F.softmax(predict, dim=1)
 
+    oneshot_predict = torch.argmax(predict,dim=1)#N*H*W
+    oneshot_target = torch.argmax(target,dim=1) #N*H*W
 
+    dice_list = []
+    for i in range(target.shape[1]):
+        if i != ignore_index:
+            # dice = binary_dice(predict[:, i], target[:, i])
+            dice = binary_dice((oneshot_predict==i).float(), (oneshot_target==i).float())
+            total_dice += dice
+            dice_list.append(round(dice.item(),4))
+    print(dice_list)
+
+    if ignore_index is not None:
+        return total_dice/(target.shape[1] - 1)
+    else:
+        return total_dice/target.shape[1]
 
 def accuracy(output, target):
     '''
