@@ -25,12 +25,12 @@ json_path = {
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'm_unet'
-VERSION = 'v1.3-zero'
+VERSION = 'v1.4-zero'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '2'
+DEVICE = '4'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False
@@ -69,7 +69,7 @@ PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME
 
 #--------------------------------- others
 INPUT_SHAPE = (512,512)
-BATCH_SIZE = 12
+BATCH_SIZE = 8
 
 # CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'seg', 'v8.3-zero', ROI_NAME, str(1))
 CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
@@ -112,7 +112,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'TopkCEPlusDice'
+    LOSS_FUN = 'DynamicTopkCEPlusDice'
 else:
     LOSS_FUN = 'BCEPlusDice'
 
