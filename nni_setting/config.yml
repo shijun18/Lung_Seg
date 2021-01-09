@@ -1,7 +1,7 @@
 authorName: shijun
 experimentName: test_for_data_augmentation
 trialConcurrency: 24
-maxExecDuration: 1000h
+maxExecDuration: 10000h
 maxTrialNum: 3000
 #choice: local, remote, pai
 trainingServicePlatform: local

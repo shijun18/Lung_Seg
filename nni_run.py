@@ -144,9 +144,6 @@ def train_on_epoch(epoch):
         loss.backward()
         optimizer.step()
 
-        output = output.float()
-        loss = loss.float()
-
         cls_output = output[1] #N*C
         cls_output = F.sigmoid(cls_output).float()
 
@@ -272,13 +269,13 @@ if __name__ == '__main__':
 
         csv_path = '/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/lung_tumor.csv'
         path_list = get_path_with_annotation(csv_path, 'path', 'GTV')
-        fold_losses = []
+        fold_metric = []
 
         for cur_fold in range(1, FOLD_NUM+1):
             train_path, val_path = get_cross_validation_by_specificed(path_list, VAL_SAMPLE)
             prepare(RCV_CONFIG, train_path, val_path)
 
-            fold_best_val_loss = 1.
+            fold_best_val_metric = 0.
             for epoch in range(start_epoch, start_epoch+args.epochs):
                 epoch_train_loss, epoch_train_dice, epoch_train_acc = train_on_epoch(epoch)
                 epoch_val_loss, epoch_val_dice, epoch_val_acc = val_on_epoch(epoch)
@@ -288,16 +285,17 @@ if __name__ == '__main__':
                 if mode == 'cls':
                     print('Fold %d | Epoch %d | Val Loss %.5f | Acc %.5f'
                         % (cur_fold, epoch, epoch_val_loss, epoch_val_acc))
+                    nni.report_intermediate_result(epoch_val_acc)
+                    fold_best_val_metric = max(fold_best_val_metric, epoch_val_acc)
                 else:
                     print('Fold %d | Epoch %d | Val Loss %.5f | Dice %.5f'
                         % (cur_fold, epoch, epoch_val_loss, epoch_val_dice))
+                    nni.report_intermediate_result(epoch_val_dice)
+                    fold_best_val_metric = max(fold_best_val_metric, epoch_val_dice)
 
-                fold_best_val_loss = min(fold_best_val_loss, epoch_val_loss)
-                nni.report_intermediate_result(epoch_val_loss)
-
-            fold_losses.append(fold_best_val_loss)
+            fold_metric.append(fold_best_val_metric)
             break
-        nni.report_final_result(np.mean(fold_losses))
+        nni.report_final_result(np.mean(fold_metric))
     except Exception as exception:
         _logger.exception(exception)
         raise

@@ -38,6 +38,12 @@
             ]
         ]
     },
+    "T_max": {
+        "_type": "choice",
+        "_value": [
+            5
+        ]
+    },
     "tr_index": {
         "_type": "choice",
         "_value": [
