@@ -11,7 +11,7 @@ import shutil
 
 from torch.nn import functional as F
 
-from data_utils.transformer import RandomFlip2D, RandomRotate2D, RandomErase2D
+from data_utils.transformer import RandomFlip2D, RandomRotate2D, RandomErase2D,RandomZoom2D,RandomAdjust2D,RandomNoise2D,RandomDistort2D
 from data_utils.data_loader import DataGenerator, To_Tensor, CropResize, Trunc_and_Normalize
 
 import torch.distributed as dist
@@ -164,8 +164,10 @@ class SemanticSeg(object):
                 Trunc_and_Normalize(self.scale),
                 CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomErase2D(scale_flag=False),
+                RandomZoom2D(),
                 RandomRotate2D(),
                 RandomFlip2D(mode='hv'),
+                RandomAdjust2D(),
                 To_Tensor(num_class=self.num_classes)
             ])
         else:
@@ -173,8 +175,11 @@ class SemanticSeg(object):
                 Trunc_and_Normalize(self.scale),
                 CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomErase2D(scale_flag=False),
+                RandomZoom2D(),
+                RandomDistort2D(),
                 RandomRotate2D(),
                 RandomFlip2D(mode='hv'),
+                RandomAdjust2D(),
                 To_Tensor(num_class=self.num_classes)
             ])
         train_dataset = DataGenerator(train_path,
@@ -205,7 +210,7 @@ class SemanticSeg(object):
         for epoch in range(self.start_epoch, self.n_epoch):
             train_loss, train_dice, train_acc = self._train_on_epoch(epoch, net, loss, optimizer, train_loader)
 
-            val_loss, val_dice, val_acc = self._val_on_epoch(epoch, net, loss, val_path, train_transformer)
+            val_loss, val_dice, val_acc = self._val_on_epoch(epoch, net, loss, val_path)
 
             if lr_scheduler is not None:
                 lr_scheduler.step(val_loss)
@@ -333,9 +338,25 @@ class SemanticSeg(object):
 
         return train_loss.avg, train_dice.avg, train_acc.avg
 
-    def _val_on_epoch(self, epoch, net, criterion, val_path, val_transformer):
+    def _val_on_epoch(self, epoch, net, criterion, val_path, val_transformer=None):
 
         net.eval()
+
+        if self.mode == 'cls':
+            val_transformer = transforms.Compose([
+                Trunc_and_Normalize(self.scale),
+                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                # RandomErase2D(scale_flag=False),
+                # RandomRotate2D(),
+                # RandomFlip2D(mode='hv'),
+                To_Tensor(num_class=self.num_classes)
+            ])
+        else:
+            val_transformer = transforms.Compose([
+                Trunc_and_Normalize(self.scale),
+                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                To_Tensor(num_class=self.num_classes)
+            ])
 
         val_dataset = DataGenerator(val_path,
                                     roi_number=self.roi_number,

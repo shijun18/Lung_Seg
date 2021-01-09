@@ -6,6 +6,9 @@ import torch
 import numpy as np
 from utils import hdf5_reader
 from skimage.transform import resize
+import cv2
+from scipy.ndimage.interpolation import map_coordinates
+from scipy.ndimage.filters import gaussian_filter
 
 
 class Trunc_and_Normalize(object):

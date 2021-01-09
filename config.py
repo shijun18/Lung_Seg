@@ -25,12 +25,12 @@ json_path = {
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'm_unet'
-VERSION = 'v1.4-zero'
+VERSION = 'v1.3-zero-noaug-in-val'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '4'
+DEVICE = '1'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False
@@ -112,7 +112,7 @@ __mtl_loss__ = ['BCEPlusDice']
 if MODE == 'cls':
     LOSS_FUN = 'BCEWithLogitsLoss'
 elif MODE == 'seg' :
-    LOSS_FUN = 'DynamicTopkCEPlusDice'
+    LOSS_FUN = 'TopkCEPlusDice'
 else:
     LOSS_FUN = 'BCEPlusDice'
 
