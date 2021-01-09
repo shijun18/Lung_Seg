@@ -174,7 +174,7 @@ class SemanticSeg(object):
             train_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
                 CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
-                RandomErase2D(scale_flag=False),
+                # RandomErase2D(scale_flag=False),
                 RandomZoom2D(),
                 RandomDistort2D(),
                 RandomRotate2D(),
