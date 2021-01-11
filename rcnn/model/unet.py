@@ -123,12 +123,14 @@ class UNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
 
-    def forward(self, x):
+    def forward(self, x, hidden):
         x1 = self.inc(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)
         x4 = self.down3(x3)
         x5 = self.down4(x4)
+
+        x5 = x5 + hidden
 
         x = self.up1(x5, x4)
         x = self.up2(x, x3)
@@ -153,8 +155,35 @@ class UNet(nn.Module):
             weight = (weight > 0.5).float()
             seg_logits[:,1:,...] = seg_logits[:,1:,...] * weight.view(b,c-1,1,1).expand_as(seg_logits[:,1:,...])
 
-        return [seg_logits,cls_logits]
+        return [seg_logits,cls_logits,x5]
 
+
+class RUNet(nn.Module):
+    def __init__(self, backbone, n_channels=1, n_classes=2, seq_len=3):
+        super(RUNet, self).__init__()
+        self.backbone = backbone(n_channels=n_channels, n_classes=n_classes)
+        self.n_channels = n_channels
+        self.n_classes = n_classes
+        self.seq_len = seq_len
+
+    def forward(self, x):
+        _, _, seq_len, _, _ = x.size()
+        seg_out = []
+        cls_out = []
+        for i in range(seq_len):
+            if i == 0:
+                hidden_logits = 0.
+            seg_logits, cls_logits, hidden_logits = self.backbone(x[:,:,i,...],hidden_logits)  # seg_logits:(N,num_class,H,W) cls_logits:(N,num_class-1)
+            seg_out.append(seg_logits)
+            cls_out.append(cls_logits)
+        seg_out = torch.cat(seg_out) # (seq_len,N,num_class,H,W)
+        cls_out = torch.cat(cls_out) # (seq_len,N,num_class-1)
+        return [seg_out,cls_out]
+
+
+
+def rcnn_unet(**kwargs):
+    return RUNet(backbone=m_unet,**kwargs)
 
 
 def m_unet(**kwargs):
@@ -204,17 +233,17 @@ def er_unet(**kwargs):
 
 
 
-# if __name__ == "__main__":
+if __name__ == "__main__":
   
-#   net = m_unet(n_channels=1, n_classes=2)
+  net = rcnn_unet(n_channels=1, n_classes=2,seq_len=3)
 
 
-#   from torchsummary import summary
-#   import os 
-#   os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-# #   summary(net,input_size=(1,512,512),batch_size=1,device='cuda')
-#   summary(net.cuda(),input_size=(1,256,256),batch_size=1,device='cuda')
-#   import sys
-#   sys.path.append('..')
-#   from utils import count_params_and_macs
-#   count_params_and_macs(net.cuda(),(1,1,256,256))
+  from torchsummary import summary
+  import os 
+  os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+#   summary(net,input_size=(1,512,512),batch_size=1,device='cuda')
+  summary(net.cuda(),input_size=(1,3,256,256),batch_size=1,device='cuda')
+  import sys
+  sys.path.append('..')
+  from utils import count_params_and_macs
+  count_params_and_macs(net.cuda(),(1,3,256,256))

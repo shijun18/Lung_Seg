@@ -1,10 +1,9 @@
-import sys
+import sys 
 sys.path.append('..')
-
 from torch.utils.data import Dataset
 import torch
 import numpy as np
-from utils import hdf5_reader
+from rcnn.utils import hdf5_reader
 from skimage.transform import resize
 import cv2
 from scipy.ndimage.interpolation import map_coordinates
@@ -154,7 +153,7 @@ class DataGenerator(Dataset):
         
         sample = {'image': new_img, 'mask': new_lab}
         if self.transform is not None:
-            sample = self.transform(sample) #img:(cin,seq_len, H, W), lab:(num_class,seq_len, H, W)
+            sample = self.transform(sample) #image:(cin,seq_len, H, W), mask:(num_class,seq_len, H, W)
 
         label = []
         label_array = np.argmax(sample['mask'].numpy(),axis=0) #(seq_len, H, W)
@@ -163,6 +162,6 @@ class DataGenerator(Dataset):
             tmp_label[np.unique(label_array[index]).astype(np.uint8)] = 1 #(num_class,)
             label.append(tmp_label[1:])
 
-        sample['label'] = torch.Tensor(label) #(seq_len,num_class)
+        sample['label'] = torch.Tensor(label) #(seq_len,num_class-1)
 
         return sample

@@ -7,8 +7,8 @@ from PIL import Image
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 
-from config import INIT_TRAINER, SETUP_TRAINER, CURRENT_FOLD, PATH_LIST, FOLD_NUM, ROI_NAME,TEST_PATH
-from config import VERSION, ROI_NAME, DISEASE, MODE
+from rcnn.config import INIT_TRAINER, SETUP_TRAINER, CURRENT_FOLD, PATH_LIST, FOLD_NUM, ROI_NAME,TEST_PATH
+from rcnn.config import VERSION, ROI_NAME, DISEASE, MODE
 import time
 
 
@@ -152,6 +152,7 @@ if __name__ == "__main__":
 
     # Inference
     ###############################################
+    '''
     if args.mode == 'test':
         start_time = time.time()
         test_path = TEST_PATH
@@ -175,3 +176,4 @@ if __name__ == "__main__":
             csv_file = pd.DataFrame(info)
             csv_file.to_csv(csv_path, index=False)
         print('run time:%.4f' % (time.time() - start_time))
+    '''

@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from loss.dice_loss import DiceLoss,ShiftDiceLoss
-from loss.cross_entropy import  CrossentropyLoss, TopKLoss, DynamicTopKLoss
+from rcnn.loss.dice_loss import DiceLoss,ShiftDiceLoss
+from rcnn.loss.cross_entropy import  CrossentropyLoss, TopKLoss, DynamicTopKLoss
 
 class BCEPlusDice(nn.Module):
     """Dice loss, need one hot encode input

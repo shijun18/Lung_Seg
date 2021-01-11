@@ -14,7 +14,6 @@ def hdf5_reader(data_path, key):
     return image
 
 
-
 def get_path_with_annotation(input_path,path_col,tag_col):
     path_list = pd.read_csv(input_path)[path_col].values.tolist()
     tag_list = pd.read_csv(input_path)[tag_col].values.tolist()
