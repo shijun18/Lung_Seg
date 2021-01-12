@@ -121,7 +121,7 @@ class TopkCEPlusDice(nn.Module):
         self.ignore_index = ignore_index
 
     def forward(self, predict, target):
-
+        # print(predict.size(),target.size())
         assert predict.size() == target.size()
         dice = DiceLoss(weight=self.weight,ignore_index=self.ignore_index,**self.kwargs)
         dice_loss = dice(predict,target)

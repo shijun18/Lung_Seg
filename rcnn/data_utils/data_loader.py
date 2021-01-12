@@ -133,7 +133,7 @@ class DataGenerator(Dataset):
         if self.seq_len == -1:
             return len(self.path_list)
         else:
-            return len(self.path_list)*(self.seq_len**2)
+            return len(self.path_list)*(self.seq_len)
 
     def __getitem__(self, index):
         # Get image and mask

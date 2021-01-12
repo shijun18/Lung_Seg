@@ -17,7 +17,7 @@ VAL_SAMPLE = ['10446967','10682303','08676580','16674245','12786488','01472680',
 
 def get_cross_validation_by_specificed(path_list, val_sample=None):
 
-    sample_list = list(set([os.path.basename(case).split('_')[0] for case in path_list]))
+    sample_list = list(set([os.path.basename(case).split('.')[0] for case in path_list]))
     print('number of sample:',len(sample_list))
     train_id = []
     validation_id = []
@@ -30,7 +30,7 @@ def get_cross_validation_by_specificed(path_list, val_sample=None):
     train_path = []
     validation_path = []
     for case in path_list:
-        if os.path.basename(case).split('_')[0] in train_id:
+        if os.path.basename(case).split('.')[0] in train_id:
             train_path.append(case)
         else:
             validation_path.append(case)

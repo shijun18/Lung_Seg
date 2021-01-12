@@ -278,22 +278,24 @@ class SemanticSeg(object):
             data = sample['image']  # img:(N,cin,seq_len, H, W),
             target = sample['mask'] # mask:(N,num_class,seq_len, H, W),
             label = sample['label'] # label (N,seq_len,num_class-1)
+            # print(data.size(),target.size(),label.size())
 
             data = data.cuda() 
             target = target.cuda()
             label = label.cuda()
 
-            output = net(data) #(seq_len,N,num_class,H,W) (seq_len,N,num_class-1)
+            output = net(data) #(N,seq_len,num_class,H,W) (N,seq_len,num_class-1)
+            # print(output[0].size(),output[1].size())
             loss = 0.
             if self.mode == 'cls':
                 for i in range(data.size(2)):
-                    loss += criterion(output[1][i], label[:,i])
+                    loss += criterion(output[1][:,i], label[:,i])
             elif self.mode == 'seg':
                 for i in range(data.size(2)):
-                    loss += criterion(output[0][i], target[:,:,i])
+                    loss += criterion(output[0][:,i], target[:,:,i])
             else:
                 for i in range(data.size(2)):
-                    loss += criterion([output[0][i],output[1][i]],[target[:,:,i],label[:,i]])
+                    loss += criterion([output[0][:,i],output[1][:,i]],[target[:,:,i],label[:,i]])
             
             loss /= data.size(2)
 
@@ -307,14 +309,14 @@ class SemanticSeg(object):
             total_dice = 0.
             total_acc = 0.
             for i in range(data.size(2)):
-                cls_output = output[1][i] #(N,num_class-1)
+                cls_output = output[1][:,i] #(N,num_class-1)
                 cls_output = F.sigmoid(cls_output).float()
 
-                seg_output = output[0][i].float() #(N,num_class,H,W)
+                seg_output = output[0][:,i].float() #(N,num_class,H,W)
                 seg_output = F.softmax(seg_output, dim=1)
 
                 # measure acc
-                acc = accuracy(cls_output.detach(), label)
+                acc = accuracy(cls_output.detach(), label[:,i])
                 train_acc.update(acc.item(), data.size(0))
                 total_acc += acc.item()
 
@@ -401,13 +403,13 @@ class SemanticSeg(object):
                 loss = 0.
                 if self.mode == 'cls':
                     for i in range(data.size(2)):
-                        loss += criterion(output[1][i], label[:,i])
+                        loss += criterion(output[1][:,i], label[:,i])
                 elif self.mode == 'seg':
                     for i in range(data.size(2)):
-                        loss += criterion(output[0][i], target[:,:,i])
+                        loss += criterion(output[0][:,i], target[:,:,i])
                 else:
                     for i in range(data.size(2)):
-                        loss += criterion([output[0][i],output[1][i]],[target[:,:,i],label[:,i]])
+                        loss += criterion([output[0][:,i],output[1][:,i]],[target[:,:,i],label[:,i]])
 
                 loss /= data.size(2)
 
@@ -417,14 +419,14 @@ class SemanticSeg(object):
                 total_dice = 0.
                 total_acc = 0.
                 for i in range(data.size(2)):
-                    cls_output = output[1][i] #(N,num_class-1)
+                    cls_output = output[1][:,i] #(N,num_class-1)
                     cls_output = F.sigmoid(cls_output).float()
 
-                    seg_output = output[0][i].float() #(N,num_class,H,W)
+                    seg_output = output[0][:,i].float() #(N,num_class,H,W)
                     seg_output = F.softmax(seg_output, dim=1)
 
                     # measure acc
-                    acc = accuracy(cls_output.detach(), label)
+                    acc = accuracy(cls_output.detach(), label[:,i])
                     val_acc.update(acc.item(), data.size(0))
                     total_acc += acc.item()
 
@@ -517,19 +519,19 @@ class SemanticSeg(object):
                 total_dice = 0.
                 total_acc = 0.
                 for i in range(data.size(2)):
-                    cls_output = output[1][i]
+                    cls_output = output[1][:,i]
                     cls_output = F.sigmoid(cls_output).float()
 
-                    seg_output = output[0][i].float()
+                    seg_output = output[0][:,i].float()
                     seg_output = F.softmax(seg_output, dim=1)
 
                     # measure acc
-                    acc = accuracy(cls_output.detach(), label)
+                    acc = accuracy(cls_output.detach(), label[:,i])
                     test_acc.update(acc.item(),data.size(0))
                     total_acc += acc.item()
 
                     # measure dice and iou for evaluation (float)
-                    dice = compute_dice(seg_output.detach(), target, ignore_index=0)
+                    dice = compute_dice(seg_output.detach(), target[:,:,i], ignore_index=0)
                     test_dice.update(dice.item(), data.size(0))
                     total_dice += dice.item()
 
@@ -566,7 +568,7 @@ class SemanticSeg(object):
 
     def _get_net(self, net_name):
         if net_name == 'rcnn_unet' :
-            from .model.unet import rcnn_unet
+            from rcnn.model.unet import rcnn_unet
             net = rcnn_unet(n_channels=self.channels,n_classes=self.num_classes,seq_len=self.seq_len)    
    
         return net
@@ -576,71 +578,71 @@ class SemanticSeg(object):
             class_weight = torch.tensor(class_weight)
 
         if loss_fun == 'Cross_Entropy':
-            from .loss.cross_entropy import CrossentropyLoss
+            from rcnn.loss.cross_entropy import CrossentropyLoss
             loss = CrossentropyLoss(weight=class_weight)
         if loss_fun == 'DynamicTopKLoss':
-            from .loss.cross_entropy import DynamicTopKLoss
+            from rcnn.loss.cross_entropy import DynamicTopKLoss
             loss = DynamicTopKLoss(weight=class_weight,step_threshold=self.step_pre_epoch)
         
         elif loss_fun == 'DynamicTopkCEPlusDice':
-            from .loss.combine_loss import DynamicTopkCEPlusDice
+            from rcnn.loss.combine_loss import DynamicTopkCEPlusDice
             loss = DynamicTopkCEPlusDice(weight=class_weight, ignore_index=0, step_threshold=self.step_pre_epoch)
         
         elif loss_fun == 'TopKLoss':
-            from .loss.cross_entropy import TopKLoss
+            from rcnn.loss.cross_entropy import TopKLoss
             loss = TopKLoss(weight=class_weight, k=self.topk)
         
         elif loss_fun == 'DiceLoss':
-            from .loss.dice_loss import DiceLoss
+            from rcnn.loss.dice_loss import DiceLoss
             loss = DiceLoss(weight=class_weight, ignore_index=0, p=1)
         elif loss_fun == 'ShiftDiceLoss':
-            from .loss.dice_loss import ShiftDiceLoss
+            from rcnn.loss.dice_loss import ShiftDiceLoss
             loss = ShiftDiceLoss(weight=class_weight,ignore_index=0, reduction='topk',shift=0.5, p=1, k=self.topk)
         elif loss_fun == 'TopkDiceLoss':
-            from .loss.dice_loss import DiceLoss
+            from rcnn.loss.dice_loss import DiceLoss
             loss = DiceLoss(weight=class_weight, ignore_index=0,reduction='topk', k=self.topk)
 
         elif loss_fun == 'PowDiceLoss':
-            from .loss.dice_loss import DiceLoss
+            from rcnn.loss.dice_loss import DiceLoss
             loss = DiceLoss(weight=class_weight, ignore_index=0, p=2)
         
         elif loss_fun == 'TverskyLoss':
-            from .loss.tversky_loss import TverskyLoss
+            from rcnn.loss.tversky_loss import TverskyLoss
             loss = TverskyLoss(weight=class_weight, ignore_index=0, alpha=0.7)
         
         elif loss_fun == 'FocalTverskyLoss':
-            from .loss.tversky_loss import TverskyLoss
+            from rcnn.loss.tversky_loss import TverskyLoss
             loss = TverskyLoss(weight=class_weight, ignore_index=0, alpha=0.7, gamma=0.75)
 
         elif loss_fun == 'BCEWithLogitsLoss':
             loss = nn.BCEWithLogitsLoss(class_weight)
         
         elif loss_fun == 'BCEPlusDice':
-            from .loss.combine_loss import BCEPlusDice
+            from rcnn.loss.combine_loss import BCEPlusDice
             loss = BCEPlusDice(weight=class_weight,ignore_index=0,p=1)
         
         elif loss_fun == 'CEPlusDice':
-            from .loss.combine_loss import CEPlusDice
+            from rcnn.loss.combine_loss import CEPlusDice
             loss = CEPlusDice(weight=class_weight, ignore_index=0)
         
         elif loss_fun == 'CEPlusTopkDice':
-            from .loss.combine_loss import CEPlusTopkDice
+            from rcnn.loss.combine_loss import CEPlusTopkDice
             loss = CEPlusTopkDice(weight=class_weight, ignore_index=0, reduction='topk', k=self.topk)
         
         elif loss_fun == 'TopkCEPlusTopkDice':
-            from .loss.combine_loss import TopkCEPlusTopkDice
+            from rcnn.loss.combine_loss import TopkCEPlusTopkDice
             loss = TopkCEPlusTopkDice(weight=class_weight, ignore_index=0, reduction='topk', k=self.topk)
         
         elif loss_fun == 'TopkCEPlusDice':
-            from .loss.combine_loss import TopkCEPlusDice
+            from rcnn.loss.combine_loss import TopkCEPlusDice
             loss = TopkCEPlusDice(weight=class_weight, ignore_index=0, k=self.topk)
         
         elif loss_fun == 'TopkCEPlusShiftDice':
-            from .loss.combine_loss import TopkCEPlusShiftDice
+            from rcnn.loss.combine_loss import TopkCEPlusShiftDice
             loss = TopkCEPlusShiftDice(weight=class_weight,ignore_index=0, shift=0.5,k=self.topk)
         
         elif loss_fun == 'TopkCEPlusTopkShiftDice':
-            from .loss.combine_loss import TopkCEPlusTopkShiftDice
+            from rcnn.loss.combine_loss import TopkCEPlusTopkShiftDice
             loss = TopkCEPlusTopkShiftDice(weight=class_weight,ignore_index=0, reduction='topk',shift=0.5,k=self.topk)
         
         return loss
@@ -784,7 +786,7 @@ def compute_dice(predict,target,ignore_index=0):
             dice = binary_dice((oneshot_predict==i).float(), (oneshot_target==i).float())
             total_dice += dice
             dice_list.append(round(dice.item(),4))
-    print(dice_list)
+    # print(dice_list)
 
     if ignore_index is not None:
         return total_dice/(target.shape[1] - 1)

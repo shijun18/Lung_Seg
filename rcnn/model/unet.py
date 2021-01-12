@@ -176,8 +176,10 @@ class RUNet(nn.Module):
             seg_logits, cls_logits, hidden_logits = self.backbone(x[:,:,i,...],hidden_logits)  # seg_logits:(N,num_class,H,W) cls_logits:(N,num_class-1)
             seg_out.append(seg_logits)
             cls_out.append(cls_logits)
-        seg_out = torch.cat(seg_out) # (seq_len,N,num_class,H,W)
-        cls_out = torch.cat(cls_out) # (seq_len,N,num_class-1)
+        seg_out = torch.stack(seg_out) # (seq_len,N,num_class,H,W)
+        cls_out = torch.stack(cls_out) # (seq_len,N,num_class-1)
+        seg_out = seg_out.transpose(0,1) # (N,seq_len,num_class,H,W)
+        cls_out = cls_out.transpose(0,1) # (N,seq_len,num_class-1)
         return [seg_out,cls_out]
 
 

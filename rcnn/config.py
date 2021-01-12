@@ -30,7 +30,7 @@ VERSION = 'v1.3'
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '0'
+DEVICE = '0,1'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False
@@ -53,14 +53,14 @@ SCALE = info['scale'][ROI_NAME]
 
 #--------------------------------- mode and data path setting
 #all
-PATH_LIST = glob.glob(os.path.join(info['npy_data'],'*.hdf5'))
+PATH_LIST = glob.glob(os.path.join(info['npy_path'],'*.hdf5'))
 # PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/EGFR/2d_data','*.hdf5')))
 # PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/Covid-Seg/2d_data','*.hdf5')))
 
 
 #--------------------------------- others
-SQE_LEN = 3
-INPUT_SHAPE = (SQE_LEN,256,256)
+SQE_LEN = 5
+INPUT_SHAPE = (SQE_LEN,512,512)
 BATCH_SIZE = 2
 
 # CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'seg', 'v8.3-zero', ROI_NAME, str(1))
