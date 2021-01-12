@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     # Inference
     ###############################################
-    '''
+    
     if args.mode == 'test':
         start_time = time.time()
         test_path = TEST_PATH
@@ -176,4 +176,4 @@ if __name__ == "__main__":
             csv_file = pd.DataFrame(info)
             csv_file.to_csv(csv_path, index=False)
         print('run time:%.4f' % (time.time() - start_time))
-    '''
+    

@@ -130,7 +130,10 @@ class DataGenerator(Dataset):
 
 
     def __len__(self):
-        return len(self.path_list)*(self.seq_len**2)
+        if self.seq_len == -1:
+            return len(self.path_list)
+        else:
+            return len(self.path_list)*(self.seq_len**2)
 
     def __getitem__(self, index):
         # Get image and mask
@@ -143,13 +146,18 @@ class DataGenerator(Dataset):
             mask = (mask == self.roi_number).astype(np.float32)
 
         # get seq
+        seq_len = self.seq_len
         mask_sum = np.sum(mask.reshape(mask.shape[0],-1),axis=-1)
         mask_index = np.nonzero(mask_sum)[0]
-        choice_space = list(range(np.min(mask_index),np.max(mask_index),self.seq_len))
-        choic_index = random.choice(choice_space)
+        choice_space = list(range(np.min(mask_index),np.max(mask_index),seq_len))
+        if self.seq_len == -1:
+            choice_index = np.min(mask_index)
+            seq_len = np.max(mask_index) - choice_index + 1
+        else:
+            choice_index = random.choice(choice_space)
 
-        new_img = image[choic_index:choic_index + self.seq_len] #(seq_len, H, W)
-        new_lab = mask[choic_index:choic_index + self.seq_len] #(seq_len, H, W)
+        new_img = image[choice_index:choice_index + seq_len] #(seq_len, H, W)
+        new_lab = mask[choice_index:choice_index + seq_len] #(seq_len, H, W)
         
         sample = {'image': new_img, 'mask': new_lab}
         if self.transform is not None:
@@ -157,9 +165,9 @@ class DataGenerator(Dataset):
 
         label = []
         label_array = np.argmax(sample['mask'].numpy(),axis=0) #(seq_len, H, W)
-        for index in range(self.seq_len):
+        for i in range(seq_len):
             tmp_label = np.zeros((self.num_class, ), dtype=np.float32)
-            tmp_label[np.unique(label_array[index]).astype(np.uint8)] = 1 #(num_class,)
+            tmp_label[np.unique(label_array[i]).astype(np.uint8)] = 1 #(num_class,)
             label.append(tmp_label[1:])
 
         sample['label'] = torch.Tensor(label) #(seq_len,num_class-1)

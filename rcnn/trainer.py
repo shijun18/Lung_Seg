@@ -167,6 +167,7 @@ class SemanticSeg(object):
                 Trunc_and_Normalize(self.scale),
                 CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomEraseHalf(scale_flag=False),
+                RandomDistortHalf(),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
                 RandomFlipHalf(mode='hv'),
                 RandomAdjustHalf(),
@@ -177,6 +178,7 @@ class SemanticSeg(object):
                 Trunc_and_Normalize(self.scale),
                 CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomEraseHalf(scale_flag=False),
+                RandomDistortHalf(),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
                 RandomFlipHalf(mode='hv'),
                 RandomAdjustHalf(),
@@ -192,8 +194,7 @@ class SemanticSeg(object):
                                   batch_size=self.batch_size,
                                   shuffle=True,
                                   num_workers=self.num_workers,
-                                  pin_memory=True,
-                                  drop_last=True)
+                                  pin_memory=True)
 
         # copy to gpu
         net = net.cuda()
@@ -303,6 +304,8 @@ class SemanticSeg(object):
             loss = loss.float()
             train_loss.update(loss.item(), data.size(0))
 
+            total_dice = 0.
+            total_acc = 0.
             for i in range(data.size(2)):
                 cls_output = output[1][i] #(N,num_class-1)
                 cls_output = F.sigmoid(cls_output).float()
@@ -313,10 +316,12 @@ class SemanticSeg(object):
                 # measure acc
                 acc = accuracy(cls_output.detach(), label)
                 train_acc.update(acc.item(), data.size(0))
+                total_acc += acc.item()
 
                 # measure dice and record loss
                 dice = compute_dice(seg_output.detach(), target[:,:,i])
                 train_dice.update(dice.item(), data.size(0))
+                total_dice += dice.item()
 
                 # measure run dice  
                 seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W 
@@ -327,20 +332,20 @@ class SemanticSeg(object):
 
             if self.global_step % 10 == 0:
                 if self.mode == 'cls':
-                    print('epoch:{},step:{},train_loss:{:.5f},train_acc:{:.5f},lr:{}'.format(epoch, step, loss.item(), acc.item(), optimizer.param_groups[0]['lr']))
+                    print('epoch:{},step:{},train_loss:{:.5f},train_acc:{:.5f},lr:{}'.format(epoch, step, loss.item(), total_acc/data.size(2), optimizer.param_groups[0]['lr']))
                 elif self.mode == 'seg':
                     rundice, dice_list = run_dice.compute_dice() 
                     print("Category Dice: ", dice_list)
-                    print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},run_dice:{:.5f},lr:{}'.format(epoch, step, loss.item(), dice.item(), rundice, optimizer.param_groups[0]['lr']))
+                    print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},run_dice:{:.5f},lr:{}'.format(epoch, step, loss.item(), total_dice/data.size(2), rundice, optimizer.param_groups[0]['lr']))
                     run_dice.init_op()
                 else:
-                    print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},train_acc:{:.5f},lr:{}'.format(epoch, step, loss.item(), dice.item(),acc.item(), optimizer.param_groups[0]['lr']))
+                    print('epoch:{},step:{},train_loss:{:.5f},train_dice:{:.5f},train_acc:{:.5f},lr:{}'.format(epoch, step, loss.item(), total_dice/data.size(2),total_acc/data.size(2), optimizer.param_groups[0]['lr']))
 
                 
                 self.writer.add_scalars('data/train_loss_dice', {
                     'train_loss': loss.item(),
-                    'train_dice': dice.item(),
-                    'train_acc': acc.item()
+                    'train_dice': total_dice/data.size(2),
+                    'train_acc': total_acc/data.size(2)
                 }, self.global_step)
 
             self.global_step += 1
@@ -368,10 +373,10 @@ class SemanticSeg(object):
                                     roi_number=self.roi_number,
                                     num_class=self.num_classes,
                                     transform=val_transformer,
-                                    seq_len=self.seq_len)
+                                    seq_len=-1)
 
         val_loader = DataLoader(val_dataset,
-                                batch_size=self.batch_size,
+                                batch_size=1,
                                 shuffle=False,
                                 num_workers=self.num_workers,
                                 pin_memory=True)
@@ -408,7 +413,9 @@ class SemanticSeg(object):
 
                 loss = loss.float()
                 val_loss.update(loss.item(), data.size(0))
-
+                
+                total_dice = 0.
+                total_acc = 0.
                 for i in range(data.size(2)):
                     cls_output = output[1][i] #(N,num_class-1)
                     cls_output = F.sigmoid(cls_output).float()
@@ -419,10 +426,12 @@ class SemanticSeg(object):
                     # measure acc
                     acc = accuracy(cls_output.detach(), label)
                     val_acc.update(acc.item(), data.size(0))
+                    total_acc += acc.item()
 
                     # measure dice and record loss
                     dice = compute_dice(seg_output.detach(), target[:,:,i])
                     val_dice.update(dice.item(), data.size(0))
+                    total_dice += dice.item()
 
                     # measure run dice  
                     seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W 
@@ -433,18 +442,18 @@ class SemanticSeg(object):
 
                 if step % 10 == 0:
                     if self.mode == 'cls':
-                        print('epoch:{},step:{},val_loss:{:.5f},val_acc:{:.5f}'.format(epoch, step, loss.item(), acc.item()))
+                        print('epoch:{},step:{},val_loss:{:.5f},val_acc:{:.5f}'.format(epoch, step, loss.item(), total_acc/data.size(2)))
                     elif self.mode == 'seg':
                         rundice, dice_list = run_dice.compute_dice() 
                         print("Category Dice: ", dice_list)
-                        print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f},rundice:{:.5f}'.format(epoch, step, loss.item(), dice.item(),rundice))
+                        print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f},rundice:{:.5f}'.format(epoch, step, loss.item(), total_dice/data.size(2),rundice))
                         run_dice.init_op()
                     else:
-                        print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f},val_acc:{:.5f}'.format(epoch, step, loss.item(), dice.item(), acc.item()))
+                        print('epoch:{},step:{},val_loss:{:.5f},val_dice:{:.5f},val_acc:{:.5f}'.format(epoch, step, loss.item(), total_dice/data.size(2), total_acc/data.size(2)))
 
         return val_loss.avg, val_dice.avg, val_acc.avg
     
-    '''TODO
+    
     def test(self, test_path, save_path, net=None, mode='seg', save_flag=False):
         if net is None:
             net = self.net
@@ -473,14 +482,13 @@ class SemanticSeg(object):
                                     roi_number=self.roi_number,
                                     num_class=self.num_classes,
                                     transform=test_transformer,
-                                    seq_len=self.seq_len)
+                                    seq_len=-1)
 
         test_loader = DataLoader(test_dataset,
-                                batch_size=20,
+                                batch_size=1,
                                 shuffle=False,
                                 num_workers=self.num_workers,
-                                pin_memory=True,
-                                drop_last=True)
+                                pin_memory=True)
 
         test_dice = AverageMeter()
         test_acc = AverageMeter()
@@ -506,50 +514,55 @@ class SemanticSeg(object):
                 label = label.cuda()
 
                 output = net(data)
+                total_dice = 0.
+                total_acc = 0.
+                for i in range(data.size(2)):
+                    cls_output = output[1][i]
+                    cls_output = F.sigmoid(cls_output).float()
 
-                cls_output = output[1]
-                cls_output = F.sigmoid(cls_output).float()
+                    seg_output = output[0][i].float()
+                    seg_output = F.softmax(seg_output, dim=1)
 
-                seg_output = output[0].float()
-                seg_output = F.softmax(seg_output, dim=1)
+                    # measure acc
+                    acc = accuracy(cls_output.detach(), label)
+                    test_acc.update(acc.item(),data.size(0))
+                    total_acc += acc.item()
 
-                # measure acc
-                acc = accuracy(cls_output.detach(), label)
-                test_acc.update(acc.item(),data.size(0))
+                    # measure dice and iou for evaluation (float)
+                    dice = compute_dice(seg_output.detach(), target, ignore_index=0)
+                    test_dice.update(dice.item(), data.size(0))
+                    total_dice += dice.item()
 
-                # measure dice and iou for evaluation (float)
-                dice = compute_dice(seg_output.detach(), target, ignore_index=0)
-                test_dice.update(dice.item(), data.size(0))
-                cls_result['prob'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
-                cls_output = (cls_output > 0.5).float() # N*C
-                cls_result['pred'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
-                cls_result['true'].extend(label.detach().squeeze().cpu().numpy().tolist())
-                # print(cls_output.detach())
-                if mode == 'mtl':
-                    b, c, _, _ = seg_output.size()
-                    seg_output[:,1:,...] = seg_output[:,1:,...] * cls_output.view(b,c-1,1,1).expand_as(seg_output[:,1:,...])
+                    cls_result['prob'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
+                    cls_output = (cls_output > 0.5).float() # N*C
+                    cls_result['pred'].extend(cls_output.detach().squeeze().cpu().numpy().tolist())
+                    cls_result['true'].extend(label.detach().squeeze().cpu().numpy().tolist())
+                    # print(cls_output.detach())
+                    if mode == 'mtl':
+                        b, c, _, _ = seg_output.size()
+                        seg_output[:,1:,...] = seg_output[:,1:,...] * cls_output.view(b,c-1,1,1).expand_as(seg_output[:,1:,...])
 
-                seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W N=1
-                target = torch.argmax(target,1).detach().cpu().numpy()
-                run_dice.update_matrix(target,seg_output)
-                # print(np.unique(seg_output),np.unique(target))
+                    seg_output = torch.argmax(seg_output,1).detach().cpu().numpy()  #N*H*W N=1
+                    tmp_target = torch.argmax(target[:,:,i],1).detach().cpu().numpy()
+                    run_dice.update_matrix(tmp_target,seg_output)
+                    # print(np.unique(seg_output),np.unique(target))
 
-                # save
-                if mode != 'cls' and save_flag:
-                    seg_output = np.squeeze(seg_output).astype(np.uint8) 
-                    seg_output = Image.fromarray(seg_output, mode='L')
-                    seg_output.save(os.path.join(save_path,test_path[step].split('.')[0] + mode +'.png'))
+                    # save
+                    if mode != 'cls' and save_flag:
+                        seg_output = np.squeeze(seg_output).astype(np.uint8) 
+                        seg_output = Image.fromarray(seg_output, mode='L')
+                        seg_output.save(os.path.join(save_path,test_path[step].split('.')[0] + '_' + str(i) +'.png'))
 
                 torch.cuda.empty_cache()
                 
-                print('step:{},test_dice:{:.5f},test_acc:{:.5f}'.format(step,dice.item(),acc.item()))
+                print('step:{},test_dice:{:.5f},test_acc:{:.5f}'.format(step,total_dice/data.size(2),total_acc/data.size(2)))
             
         rundice, dice_list = run_dice.compute_dice() 
         print("Category Dice: ", dice_list)
         print('avg_dice:{:.5f},avg_acc:{:.5f}，rundice:{:.5f}'.format(test_dice.avg, test_acc.avg, rundice))
 
         return cls_result
-    '''
+    
 
     def _get_net(self, net_name):
         if net_name == 'rcnn_unet' :

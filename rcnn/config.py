@@ -6,7 +6,7 @@ from rcnn.utils import get_path_with_annotation,get_path_with_annotation_ratio
 from rcnn.utils import get_weight_path
 
 __disease__ = ['Covid-Seg','Lung_Tumor']
-__net__ = ['m_unet','mr_unet','e_unet','er_unet','ResUNet18','ResUNet34','ResUNet50','deeplabv3plus_resnet18','deeplabv3plus_resnet34','deeplabv3plus_resnet50','deeplabv3plus_resnet101']
+__net__ = ['rcnn_unet']
 __mode__ = ['cls','seg','mtl']
 
 
@@ -24,8 +24,8 @@ json_path = {
     
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
-NET_NAME = 'm_unet'
-VERSION = 'v1.3-zero-noaug-2'
+NET_NAME = 'rcnn_unet'
+VERSION = 'v1.3'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
