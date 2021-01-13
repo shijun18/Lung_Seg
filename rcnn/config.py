@@ -25,7 +25,7 @@ json_path = {
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'rcnn_unet'
-VERSION = 'v1.3'
+VERSION = 'v1.3-5x2x512'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
@@ -60,7 +60,7 @@ PATH_LIST = glob.glob(os.path.join(info['npy_path'],'*.hdf5'))
 
 #--------------------------------- others
 SQE_LEN = 5
-INPUT_SHAPE = (SQE_LEN,512,512)
+INPUT_SHAPE = (512,512)
 BATCH_SIZE = 2
 
 # CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'seg', 'v8.3-zero', ROI_NAME, str(1))

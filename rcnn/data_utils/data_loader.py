@@ -35,7 +35,7 @@ class Trunc_and_Normalize(object):
         return new_sample
 
 
-class CropResize(object):
+class CropResizeHalf(object):
     '''
     Data preprocessing.
     Adjust the size of input data to fixed size by cropping and resize
@@ -56,18 +56,15 @@ class CropResize(object):
         mask = sample['mask']
         # crop
         if self.crop != 0:
-            if len(image.shape) > 2:
-                image = image[:,self.crop:-self.crop, self.crop:-self.crop]
-                mask = mask[:,self.crop:-self.crop, self.crop:-self.crop]
-            else:
-                image = image[self.crop:-self.crop, self.crop:-self.crop]
-                mask = mask[self.crop:-self.crop, self.crop:-self.crop]
+            image = image[:,self.crop:-self.crop, self.crop:-self.crop]
+            mask = mask[:,self.crop:-self.crop, self.crop:-self.crop]
         # resize
-        if self.dim is not None and image.shape != self.dim:
-            image = resize(image, self.dim, anti_aliasing=True)
-            temp_mask = np.zeros(self.dim,dtype=np.float32)
+        if self.dim is not None and image.shape[1:] != self.dim:
+            dim = (image.shape[0],) + self.dim
+            image = resize(image, dim, anti_aliasing=True)
+            temp_mask = np.zeros(dim,dtype=np.float32)
             for z in range(1, self.num_class):
-                roi = resize((mask == z).astype(np.float32),self.dim,mode='constant')
+                roi = resize((mask == z).astype(np.float32),dim,mode='constant')
                 temp_mask[roi >= 0.5] = z
             mask = temp_mask
 
@@ -140,7 +137,7 @@ class DataGenerator(Dataset):
         index = index % len(self.path_list)
         image = hdf5_reader(self.path_list[index],'image')
         mask = hdf5_reader(self.path_list[index],'label')
-
+        
         if self.roi_number is not None:
             assert self.num_class == 2
             mask = (mask == self.roi_number).astype(np.float32)
@@ -149,24 +146,28 @@ class DataGenerator(Dataset):
         seq_len = self.seq_len
         mask_sum = np.sum(mask.reshape(mask.shape[0],-1),axis=-1)
         mask_index = np.nonzero(mask_sum)[0]
-        choice_space = list(range(np.min(mask_index),np.max(mask_index),seq_len))
+        # choice_space = list(range(np.min(mask_index),np.max(mask_index)))[:-1]
+        choice_space = list(mask_index)
         if self.seq_len == -1:
             choice_index = np.min(mask_index)
             seq_len = np.max(mask_index) - choice_index + 1
         else:
             choice_index = random.choice(choice_space)
-
+        
         new_img = image[choice_index:choice_index + seq_len] #(seq_len, H, W)
         new_lab = mask[choice_index:choice_index + seq_len] #(seq_len, H, W)
-        
+
         sample = {'image': new_img, 'mask': new_lab}
         if self.transform is not None:
             sample = self.transform(sample) #image:(cin,seq_len, H, W), mask:(num_class,seq_len, H, W)
+
+        assert sample['mask'].size(1) == seq_len
 
         label = []
         label_array = np.argmax(sample['mask'].numpy(),axis=0) #(seq_len, H, W)
         for i in range(seq_len):
             tmp_label = np.zeros((self.num_class, ), dtype=np.float32)
+            # print(np.unique(label_array[i]).astype(np.uint8))
             tmp_label[np.unique(label_array[i]).astype(np.uint8)] = 1 #(num_class,)
             label.append(tmp_label[1:])
 

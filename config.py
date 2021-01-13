@@ -25,12 +25,12 @@ json_path = {
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'm_unet'
-VERSION = 'v1.3-zero-noaug-in-val'
+VERSION = 'v1.3-zero-noaug-2'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '1'
+DEVICE = '0'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False

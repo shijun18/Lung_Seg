@@ -14,7 +14,7 @@ import shutil
 from torch.nn import functional as F
 
 from rcnn.data_utils.transformer import RandomAdjustHalf,RandomDistortHalf,RandomEraseHalf,RandomFlipHalf,RandomNoiseHalf,RandomTranslationRotationZoomHalf
-from rcnn.data_utils.data_loader import DataGenerator, To_Tensor, CropResize, Trunc_and_Normalize
+from rcnn.data_utils.data_loader import DataGenerator, To_Tensor, CropResizeHalf, Trunc_and_Normalize
 
 import torch.distributed as dist
 # GPU version.
@@ -165,7 +165,7 @@ class SemanticSeg(object):
         if self.mode == 'cls':
             train_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
-                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomEraseHalf(scale_flag=False),
                 RandomDistortHalf(),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
@@ -176,7 +176,7 @@ class SemanticSeg(object):
         else:
             train_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
-                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomEraseHalf(scale_flag=False),
                 RandomDistortHalf(),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
@@ -361,13 +361,13 @@ class SemanticSeg(object):
         if self.mode == 'cls':
             val_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
-                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 To_Tensor(num_class=self.num_classes)
             ])
         else:
             val_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
-                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 To_Tensor(num_class=self.num_classes)
             ])
 
@@ -466,7 +466,7 @@ class SemanticSeg(object):
         if self.mode == 'cls':
             test_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
-                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 RandomEraseHalf(scale_flag=False),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
                 RandomFlipHalf(mode='hv'),
@@ -476,7 +476,7 @@ class SemanticSeg(object):
         else:
             test_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
-                CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
+                CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 To_Tensor(num_class=self.num_classes)
             ])
 
