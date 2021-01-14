@@ -95,6 +95,13 @@ class UNet(nn.Module):
         self.down2 = down(width[1], width[2], conv_builder)
         self.down3 = down(width[2], width[3], conv_builder)
         self.down4 = down(width[3], width[4] // factor, conv_builder)
+
+        self.hidden_conv = nn.Sequential(
+            nn.Conv2d(2*width[4] // factor, width[4] // factor, kernel_size=3, padding=1),
+            nn.BatchNorm2d(width[4] // factor),
+            nn.ReLU(inplace=True)
+        )
+
         self.up1 = up(width[4], width[3] // factor, conv_builder, bilinear=self.bilinear)
         self.up2 = up(width[3], width[2]// factor, conv_builder, bilinear=self.bilinear)
         self.up3 = up(width[2], width[1] // factor, conv_builder, bilinear=self.bilinear)
@@ -130,8 +137,10 @@ class UNet(nn.Module):
         x4 = self.down3(x3)
         x5 = self.down4(x4)
 
-        x5 = x5 + hidden
-
+        if len(hidden.size()) > 1:
+            x5 = torch.cat([x5,hidden],dim=1)
+            x5 = self.hidden_conv(x5)
+        # x5 = x5 + hidden
         x = self.up1(x5, x4)
         x = self.up2(x, x3)
         x = self.up3(x, x2)
@@ -152,8 +161,11 @@ class UNet(nn.Module):
         if self.revise:
             b, c, _, _ = seg_logits.size()
             weight = torch.sigmoid(cls_logits)
-            weight = (weight > 0.5).float()
-            seg_logits[:,1:,...] = seg_logits[:,1:,...] * weight.view(b,c-1,1,1).expand_as(seg_logits[:,1:,...])
+            # weight = (weight > 0.5).float()
+            cls_logits_tmp = seg_logits[:,[0],...]
+            seg_logits_tmp = seg_logits[:,1:,...]
+            seg_logits_tmp = seg_logits_tmp* weight.view(b,c-1,1,1).expand_as(seg_logits_tmp)
+            seg_logits = torch.cat([cls_logits_tmp,seg_logits_tmp],dim=1)
 
         return [seg_logits,cls_logits,x5]
 
@@ -171,8 +183,8 @@ class RUNet(nn.Module):
         seg_out = []
         cls_out = []
         for i in range(seq_len):
-            if i == 0:
-                hidden_logits = 0.
+            if i%self.seq_len == 0:
+                hidden_logits = torch.Tensor([0.])
             seg_logits, cls_logits, hidden_logits = self.backbone(x[:,:,i,...],hidden_logits)  # seg_logits:(N,num_class,H,W) cls_logits:(N,num_class-1)
             seg_out.append(seg_logits)
             cls_out.append(cls_logits)

@@ -175,11 +175,11 @@ class SemanticSeg(object):
                 Trunc_and_Normalize(self.scale),
                 CropResize(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
                 # RandomErase2D(scale_flag=False),
-                # RandomZoom2D(),
+                RandomZoom2D(),
                 # RandomDistort2D(),
-                # RandomRotate2D(),
+                RandomRotate2D(),
                 # RandomFlip2D(mode='hv'),
-                # RandomAdjust2D(),
+                RandomAdjust2D(),
                 To_Tensor(num_class=self.num_classes)
             ])
         train_dataset = DataGenerator(train_path,
@@ -233,10 +233,10 @@ class SemanticSeg(object):
                 'val': val_acc
             }, epoch)
             self.writer.add_scalar('data/lr', optimizer.param_groups[0]['lr'],epoch)
-
+            
             if val_loss <= self.loss_threshold:
                 self.loss_threshold = val_loss
-
+        
                 if len(self.device.split(',')) > 1:
                     state_dict = net.module.state_dict()
                 else:

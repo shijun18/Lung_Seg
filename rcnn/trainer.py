@@ -177,7 +177,7 @@ class SemanticSeg(object):
             train_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
                 CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
-                RandomEraseHalf(scale_flag=False),
+                # RandomEraseHalf(scale_flag=False),
                 RandomDistortHalf(),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
                 RandomFlipHalf(mode='hv'),
@@ -375,10 +375,10 @@ class SemanticSeg(object):
                                     roi_number=self.roi_number,
                                     num_class=self.num_classes,
                                     transform=val_transformer,
-                                    seq_len=-1)
+                                    seq_len=self.seq_len)
 
         val_loader = DataLoader(val_dataset,
-                                batch_size=1,
+                                batch_size=self.batch_size,
                                 shuffle=False,
                                 num_workers=self.num_workers,
                                 pin_memory=True)
