@@ -138,8 +138,8 @@ if __name__ == "__main__":
 
 
     if args.mode == 'train':
-        # train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, CURRENT_FOLD)
-        train_path, val_path = get_cross_validation_by_specificed(path_list, VAL_SAMPLE)
+        train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, CURRENT_FOLD)
+        # train_path, val_path = get_cross_validation_by_specificed(path_list, VAL_SAMPLE)
         SETUP_TRAINER['train_path'] = train_path
         SETUP_TRAINER['val_path'] = val_path
         SETUP_TRAINER['cur_fold'] = CURRENT_FOLD

@@ -22,10 +22,10 @@ json_path = {
     'EGFR':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/EGFR.json',
 }
     
-DISEASE = 'Lung_Tumor' 
+DISEASE = 'Cervical' 
 MODE = 'seg'
 NET_NAME = 'rcnn_unet'
-VERSION = 'v1.3-5x2x512-new'
+VERSION = 'v1.3-5x2x512'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)

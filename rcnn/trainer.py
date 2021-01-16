@@ -375,10 +375,10 @@ class SemanticSeg(object):
                                     roi_number=self.roi_number,
                                     num_class=self.num_classes,
                                     transform=val_transformer,
-                                    seq_len=self.seq_len)
+                                    seq_len=-1)
 
         val_loader = DataLoader(val_dataset,
-                                batch_size=self.batch_size,
+                                batch_size=1,
                                 shuffle=False,
                                 num_workers=self.num_workers,
                                 pin_memory=True)

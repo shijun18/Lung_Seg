@@ -1,7 +1,7 @@
 from __future__ import print_function
 import numpy as np
 from trainer import AverageMeter, accuracy, compute_dice
-from run import get_cross_validation,get_cross_validation_by_specificed,VAL_SAMPLE
+from run import get_cross_validation,get_cross_validation_by_specificed,VAL_SAMPLE,get_cross_validation_by_sample
 
 import argparse
 import torch
@@ -36,7 +36,7 @@ TR_COMPOSE = {
     'RN':tr.RandomNoise2D()
 }
 
-_logger = logging.getLogger("Lung_Seg_automl")
+_logger = logging.getLogger("da_automl")
 
 mode = 'seg'
 train_loader = None
@@ -57,7 +57,7 @@ roi_number = 1
 input_shape = (512,512)
 crop = 0
 batch_size = 8
-scale = [-1100,500]
+scale = [-200,400]
 
 train_path = []
 val_path = []
@@ -242,17 +242,18 @@ def prepare(args, train_path, val_path):
     if args['optimizer'] == 'SGD':
         optimizer = optim.SGD(
             net.parameters(), lr=args['lr'], momentum=args['momentum'], weight_decay=args['weight_decay'])
-
+    
     if args['optimizer'] == 'Adam':
         optimizer = optim.Adam(
             net.parameters(), lr=args['lr'], weight_decay=args['weight_decay'])
-
-    if args['lr_scheduler'] == 'MultiStepLR':
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
-            optimizer, milestones=args['milestones'], gamma=args['gamma'])
-    if args['lr_scheduler'] == 'CosineAnnealingLR':
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                       optimizer, T_max=args['T_max'])        
+    
+    if args['lr_scheduler'] != 'None':
+        if args['lr_scheduler'] == 'MultiStepLR':
+            lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
+                optimizer, milestones=args['milestones'], gamma=args['gamma'])
+        if args['lr_scheduler'] == 'CosineAnnealingLR':
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                        optimizer, T_max=args['T_max'])        
 
 
 if __name__ == '__main__':
@@ -267,12 +268,13 @@ if __name__ == '__main__':
         RCV_CONFIG = nni.get_next_parameter()
         _logger.debug(RCV_CONFIG)
 
-        csv_path = '/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/lung_tumor.csv'
-        path_list = get_path_with_annotation(csv_path, 'path', 'GTV')
+        csv_path = '/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/cervical.csv'
+        path_list = get_path_with_annotation(csv_path, 'path', 'Bladder')
         fold_metric = []
 
         for cur_fold in range(1, FOLD_NUM+1):
-            train_path, val_path = get_cross_validation_by_specificed(path_list, VAL_SAMPLE)
+            # train_path, val_path = get_cross_validation_by_specificed(path_list, VAL_SAMPLE)
+            train_path, val_path = get_cross_validation_by_sample(path_list, FOLD_NUM, cur_fold)
             prepare(RCV_CONFIG, train_path, val_path)
 
             fold_best_val_metric = 0.
