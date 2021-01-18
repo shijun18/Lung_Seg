@@ -27,13 +27,13 @@ from utils import get_path_with_annotation
 TR_OP = ['RE','RZ','RD','RR','RF','RA','RN']
 
 TR_COMPOSE = {
-    'RE':tr.RandomErase2D(scale_flag=False),
-    'RZ':tr.RandomZoom2D(),
-    'RD':tr.RandomDistort2D(),
-    'RR':tr.RandomRotate2D(),
-    'RF':tr.RandomFlip2D(mode='hv'),
-    'RA':tr.RandomAdjust2D(),
-    'RN':tr.RandomNoise2D()
+    'RE':tr.RandomErase2D(scale_flag=False), #0
+    'RZ':tr.RandomZoom2D(), #1
+    'RD':tr.RandomDistort2D(), #2
+    'RR':tr.RandomRotate2D(), #3
+    'RF':tr.RandomFlip2D(mode='hv'), #4
+    'RA':tr.RandomAdjust2D(),  #5
+    'RN':tr.RandomNoise2D()  #6
 }
 
 _logger = logging.getLogger("da_automl")
@@ -53,7 +53,7 @@ loss_fun = 'TopkCEPlusDice'
 net_name = 'm_unet'
 channels = 1
 num_classes = 2
-roi_number = 1
+roi_number = 6
 input_shape = (512,512)
 crop = 0
 batch_size = 8
@@ -259,7 +259,7 @@ def prepare(args, train_path, val_path):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=50)
+    parser.add_argument("--epochs", type=int, default=150)
     parser.add_argument("--cur_fold", type=int, default=1)
 
     args, _ = parser.parse_known_args()
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         _logger.debug(RCV_CONFIG)
 
         csv_path = '/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/cervical.csv'
-        path_list = get_path_with_annotation(csv_path, 'path', 'Bladder')
+        path_list = get_path_with_annotation(csv_path, 'path', 'Rectum')
         fold_metric = []
 
         for cur_fold in range(1, FOLD_NUM+1):

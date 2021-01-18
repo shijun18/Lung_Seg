@@ -15,7 +15,7 @@ tuner:
   builtinTunerName: TPE
   classArgs:
     #choice: maximize, minimize
-    optimize_mode: minimize
+    optimize_mode: maximize
 trial:
   command: python nni_run.py
   codeDir: /staff/shijun/torch_projects/Lung_Seg

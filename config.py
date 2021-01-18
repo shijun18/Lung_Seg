@@ -25,15 +25,15 @@ json_path = {
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
 NET_NAME = 'm_unet'
-VERSION = 'v1.3-zero-two'
+VERSION = 'v1.3-zero-new-aug'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
 DEVICE = '0,1'
 # Must be True when pre-training and inference
-PRE_TRAINED = True 
-CKPT_POINT = True
+PRE_TRAINED = False 
+CKPT_POINT = False
 # 1,2,...,8
 CURRENT_FOLD = 1
 GPU_NUM = len(DEVICE.split(','))
@@ -58,7 +58,7 @@ SCALE = info['scale'][ROI_NAME]
 # PATH_LIST.extend(glob.glob(os.path.join('/staff/shijun/dataset/Med_Seg/Covid-Seg/2d_data','*.hdf5')))
 #zero
 PATH_LIST = get_path_with_annotation(info['2d_data']['csv_path'],'path',ROI_NAME)
-PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
+# PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/nii_converter/static_files/covid-seg.csv','path','Lesion'))
 # PATH_LIST.extend(get_path_with_annotation('/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/egfr.csv','path',ROI_NAME,))
 #half
 # PATH_LIST = get_path_with_annotation_ratio(info['2d_data']['csv_path'],'path',ROI_NAME,ratio=0.5)
@@ -93,7 +93,7 @@ INIT_TRAINER = {
   'pre_trained':PRE_TRAINED,
   'ckpt_point':CKPT_POINT,
   'weight_path':WEIGHT_PATH,
-  'weight_decay': 0.001,
+  'weight_decay': 0.0001,
   'momentum': 0.99,
   'gamma': 0.1,
   'milestones': [40,80],
@@ -122,7 +122,7 @@ SETUP_TRAINER = {
   'optimizer':'Adam',
   'loss_fun':LOSS_FUN,
   'class_weight':None, #[1,4]
-  'lr_scheduler':'CosineAnnealingLR', #'CosineAnnealingLR'
+  'lr_scheduler':None, #'CosineAnnealingLR'
   }
 #---------------------------------
 TEST_PATH = None
