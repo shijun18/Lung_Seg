@@ -177,11 +177,12 @@ class SemanticSeg(object):
             train_transformer = transforms.Compose([
                 Trunc_and_Normalize(self.scale),
                 CropResizeHalf(dim=self.input_shape,num_class=self.num_classes,crop=self.crop),
-                # RandomEraseHalf(scale_flag=False),
+                RandomEraseHalf(scale_flag=False),
                 RandomDistortHalf(),
                 RandomTranslationRotationZoomHalf(num_class=self.num_classes),
-                RandomFlipHalf(mode='hv'),
-                RandomAdjustHalf(),
+                # RandomFlipHalf(mode='hv'),
+                # RandomAdjustHalf(),
+                RandomNoiseHalf(),
                 To_Tensor(num_class=self.num_classes)
             ])
         train_dataset = DataGenerator(train_path,

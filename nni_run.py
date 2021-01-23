@@ -263,6 +263,9 @@ if __name__ == '__main__':
     parser.add_argument("--cur_fold", type=int, default=1)
 
     args, _ = parser.parse_known_args()
+    torch.manual_seed(0)
+    np.random.seed(0)
+    torch.cuda.manual_seed_all(0)
 
     try:
         RCV_CONFIG = nni.get_next_parameter()

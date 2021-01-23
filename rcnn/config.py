@@ -25,12 +25,12 @@ json_path = {
 DISEASE = 'Cervical' 
 MODE = 'seg'
 NET_NAME = 'rcnn_unet'
-VERSION = 'v1.3-5x2x512'
+VERSION = 'v1.3-3x8x512'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '2,3'
+DEVICE = '4,5'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False
@@ -59,9 +59,9 @@ PATH_LIST = glob.glob(os.path.join(info['npy_path'],'*.hdf5'))
 
 
 #--------------------------------- others
-SQE_LEN = 5
+SQE_LEN = 3
 INPUT_SHAPE = (512,512)
-BATCH_SIZE = 2
+BATCH_SIZE = 8
 
 # CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE, 'seg', 'v8.3-zero', ROI_NAME, str(1))
 CKPT_PATH = './ckpt/{}/{}/{}/{}/fold{}'.format(DISEASE,MODE,VERSION,ROI_NAME,str(CURRENT_FOLD))
@@ -86,7 +86,7 @@ INIT_TRAINER = {
   'pre_trained':PRE_TRAINED,
   'ckpt_point':CKPT_POINT,
   'weight_path':WEIGHT_PATH,
-  'weight_decay': 0.001,
+  'weight_decay': 0.0001,
   'momentum': 0.99,
   'gamma': 0.1,
   'milestones': [40,80],
@@ -115,7 +115,7 @@ SETUP_TRAINER = {
   'optimizer':'Adam',
   'loss_fun':LOSS_FUN,
   'class_weight':None, #[1,4]
-  'lr_scheduler':'CosineAnnealingLR', #'CosineAnnealingLR'
+  'lr_scheduler':None, #'CosineAnnealingLR'
   }
 #---------------------------------
 TEST_PATH = None
