@@ -148,6 +148,7 @@ class DataGenerator(Dataset):
         mask_index = np.nonzero(mask_sum)[0]
         # choice_space = list(range(np.min(mask_index),np.max(mask_index)))[:-1]
         choice_space = list(mask_index)
+        #choice_space = list(range(mask.shape[0]))
         if self.seq_len == -1:
             choice_index = np.min(mask_index)
             seq_len = np.max(mask_index) - choice_index + 1
