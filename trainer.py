@@ -751,14 +751,14 @@ def compute_dice(predict,target,ignore_index=0):
     total_dice = 0.
     # predict = F.softmax(predict, dim=1)
 
-    oneshot_predict = torch.argmax(predict,dim=1)#N*H*W
-    oneshot_target = torch.argmax(target,dim=1) #N*H*W
+    onehot_predict = torch.argmax(predict,dim=1)#N*H*W
+    onehot_target = torch.argmax(target,dim=1) #N*H*W
 
     dice_list = []
     for i in range(target.shape[1]):
         if i != ignore_index:
             # dice = binary_dice(predict[:, i], target[:, i])
-            dice = binary_dice((oneshot_predict==i).float(), (oneshot_target==i).float())
+            dice = binary_dice((onehot_predict==i).float(), (onehot_target==i).float())
             total_dice += dice
             dice_list.append(round(dice.item(),4))
     print(dice_list)
