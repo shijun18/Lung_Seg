@@ -775,7 +775,7 @@ def compute_dice(predict,target,ignore_index=0):
     """
     assert predict.shape == target.shape, 'predict & target shape do not match'
     total_dice = 0.
-    predict = F.softmax(predict, dim=1)
+    # predict = F.softmax(predict, dim=1)
 
     oneshot_predict = torch.argmax(predict,dim=1)#N*H*W
     oneshot_target = torch.argmax(target,dim=1) #N*H*W

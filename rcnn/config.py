@@ -59,7 +59,7 @@ PATH_LIST = glob.glob(os.path.join(info['npy_path'],'*.hdf5'))
 
 
 #--------------------------------- others
-SQE_LEN = 3
+SEQ_LEN = 3
 INPUT_SHAPE = (512,512)
 BATCH_SIZE = 8
 
@@ -78,7 +78,7 @@ INIT_TRAINER = {
   'roi_number':ROI_NUMBER,
   'scale':SCALE,
   'input_shape':INPUT_SHAPE,
-  'seq_len':SQE_LEN,
+  'seq_len':SEQ_LEN,
   'crop':0,
   'batch_size':BATCH_SIZE,
   'num_workers':2,
