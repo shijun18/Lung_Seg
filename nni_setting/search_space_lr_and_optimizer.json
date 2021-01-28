@@ -2,6 +2,9 @@
     "lr": {
         "_type": "choice",
         "_value": [
+            0.01,
+            0.005,
+            0.002,
             0.001
         ]
     },
@@ -14,27 +17,32 @@
     "momentum": {
         "_type": "choice",
         "_value": [
-            0.9
+            0.9,
+            0.99
         ]
     },
     "optimizer": {
         "_type": "choice",
         "_value": [
-            "Adam"
+            "Adam",
+            "SGD"
         ]
     },
     "lr_scheduler": {
         "_type": "choice",
         "_value": [
-            "None"
+            "None",
+            "MultiStepLR",
+            "CosineAnnealingLR",
+            "ReduceLROnPlateau"
         ]
     },
     "milestones": {
         "_type": "choice",
         "_value": [
             [
-                25,
-                35
+                30,
+                90
             ]
         ]
     },
@@ -42,6 +50,12 @@
         "_type": "choice",
         "_value": [
             5
+        ]
+    },
+    "factor": {
+        "_type": "choice",
+        "_value": [
+            0.2
         ]
     },
     "tr_index": {

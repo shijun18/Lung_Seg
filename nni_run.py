@@ -36,7 +36,7 @@ TR_COMPOSE = {
     'RN':tr.RandomNoise2D()  #6
 }
 
-_logger = logging.getLogger("da_automl")
+_logger = logging.getLogger("automl")
 
 mode = 'seg'
 train_loader = None
@@ -254,6 +254,10 @@ def prepare(args, train_path, val_path):
         if args['lr_scheduler'] == 'CosineAnnealingLR':
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                         optimizer, T_max=args['T_max'])        
+        if args['lr_scheduler'] == 'ReduceLROnPlateau':
+            lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+                        optimizer, mode='min', factor=args['factor'])
+        
 
 
 if __name__ == '__main__':
@@ -286,7 +290,7 @@ if __name__ == '__main__':
                 epoch_val_loss, epoch_val_dice, epoch_val_acc = val_on_epoch(epoch)
 
                 if lr_scheduler is not None:
-                    lr_scheduler.step()
+                    lr_scheduler.step(epoch_val_loss)
                 if mode == 'cls':
                     print('Fold %d | Epoch %d | Val Loss %.5f | Acc %.5f'
                         % (cur_fold, epoch, epoch_val_loss, epoch_val_acc))
