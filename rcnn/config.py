@@ -22,7 +22,7 @@ json_path = {
     'EGFR':'/staff/shijun/torch_projects/Med_Seg/converter/dcm_converter/static_files/EGFR.json',
 }
     
-DISEASE = 'Cervical' 
+DISEASE = 'Lung' 
 MODE = 'seg'
 NET_NAME = 'rcnn_unet'
 VERSION = 'v1.3-3x8x512'
@@ -30,7 +30,7 @@ VERSION = 'v1.3-3x8x512'
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
-DEVICE = '4,5'
+DEVICE = '0,1'
 # Must be True when pre-training and inference
 PRE_TRAINED = False 
 CKPT_POINT = False
@@ -41,7 +41,7 @@ FOLD_NUM = 5
 
 # Arguments for trainer initialization
 #--------------------------------- single or multiple
-ROI_NUMBER = 1# or 0,1,2,3,4,5,6 
+ROI_NUMBER = 4# or 0,1,2,3,4,5,6 
 NUM_CLASSES = info['annotation_num'] + 1  # 2 for binary, more for multiple classes
 if ROI_NUMBER is not None:
     NUM_CLASSES = 2

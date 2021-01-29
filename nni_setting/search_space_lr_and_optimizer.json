@@ -49,9 +49,7 @@
     "gamma": {
         "_type": "choice",
         "_value": [
-            [
-                0.1
-            ]
+            0.1
         ]
     },
     "T_max": {
