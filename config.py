@@ -6,7 +6,10 @@ from utils import get_path_with_annotation,get_path_with_annotation_ratio
 from utils import get_weight_path
 
 __disease__ = ['Covid-Seg','Lung_Tumor']
-__net__ = ['m_unet','mr_unet','e_unet','er_unet','ResUNet18','ResUNet34','ResUNet50','deeplabv3plus_resnet18','deeplabv3plus_resnet34','deeplabv3plus_resnet50','deeplabv3plus_resnet101']
+__net__ = ['unet','unet++','FPN','deeplabv3+']
+__encoder_name__ = [None,'resnet18','resne34','resnet50','se_resnet50','resnext50_32x4d','timm-resnest14d','timm-resnest26d','timm-resnest50d', \
+                    'efficientnet-b4', 'efficientnet-b5','efficientnet-b6','efficientnet-b7']
+
 __mode__ = ['cls','seg','mtl']
 
 
@@ -24,14 +27,16 @@ json_path = {
     
 DISEASE = 'Lung_Tumor' 
 MODE = 'seg'
-NET_NAME = 'm_unet'
-VERSION = 'v1.3-zero-new-aug'
+NET_NAME = 'unet'
+ENCODER_NAME = None
+VERSION = 'v1.0'
 
 with open(json_path[DISEASE], 'r') as fp:
     info = json.load(fp)
 
 DEVICE = '0,1'
 # Must be True when pre-training and inference
+EX_PRE_TRAINED = False
 PRE_TRAINED = False 
 CKPT_POINT = False
 # 1,2,...,8
@@ -79,6 +84,7 @@ print(WEIGHT_PATH)
 
 INIT_TRAINER = {
   'net_name':NET_NAME,
+  'encoder_name':ENCODER_NAME,
   'lr':1e-3, 
   'n_epoch':200,
   'channels':1,
@@ -91,6 +97,7 @@ INIT_TRAINER = {
   'num_workers':2,
   'device':DEVICE,
   'pre_trained':PRE_TRAINED,
+  'ex_pre_trained':EX_PRE_TRAINED,
   'ckpt_point':CKPT_POINT,
   'weight_path':WEIGHT_PATH,
   'weight_decay': 0.0001,

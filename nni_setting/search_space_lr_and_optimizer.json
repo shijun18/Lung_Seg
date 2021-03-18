@@ -25,7 +25,8 @@
         "_type": "choice",
         "_value": [
             "Adam",
-            "SGD"
+            "SGD",
+            "AdamW"
         ]
     },
     "lr_scheduler": {
@@ -34,7 +35,8 @@
             "None",
             "MultiStepLR",
             "CosineAnnealingLR",
-            "ReduceLROnPlateau"
+            "ReduceLROnPlateau",
+            "CosineAnnealingWarmRestarts"
         ]
     },
     "milestones": {

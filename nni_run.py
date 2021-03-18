@@ -247,6 +247,11 @@ def prepare(args, train_path, val_path):
         optimizer = optim.Adam(
             net.parameters(), lr=args['lr'], weight_decay=args['weight_decay'])
     
+    if args['optimizer'] == 'AdamW':
+        optimizer = optim.AdamW(
+            net.parameters(), lr=args['lr'], weight_decay=args['weight_decay'])
+    
+
     if args['lr_scheduler'] != 'None':
         if args['lr_scheduler'] == 'MultiStepLR':
             lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
@@ -257,6 +262,9 @@ def prepare(args, train_path, val_path):
         if args['lr_scheduler'] == 'ReduceLROnPlateau':
             lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
                         optimizer, mode='min', factor=args['factor'])
+        if args['lr_scheduler'] == 'CosineAnnealingWarmRestarts':
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                        optimizer, 5, T_mult=2)
         
 
 

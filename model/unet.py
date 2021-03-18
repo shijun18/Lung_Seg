@@ -104,16 +104,11 @@ class UNet(nn.Module):
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         
-        if self.cls_location == 'middle':
-            self.clssifier = nn.Sequential(
-                nn.Linear(width[4] // factor, 64),
-                nn.ReLU(True),
-                nn.Linear(64, self.n_classes-1)
-            ) 
-        else:
-            self.clssifier = nn.Sequential(
-                nn.Linear(width[0], self.n_classes-1),
-            )
+        self.clssifier = nn.Sequential(
+            nn.Linear(width[4] // factor, 64),
+            nn.ReLU(True),
+            nn.Linear(64, self.n_classes-1)
+        ) 
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -135,10 +130,7 @@ class UNet(nn.Module):
         x = self.up3(x, x2)
         x = self.up4(x, x1)
         
-        if self.cls_location == 'middle':
-            avg_pool = self.avgpool(x5)
-        else:
-            avg_pool = self.avgpool(x)
+        avg_pool = self.avgpool(x5)
 
         flatten = torch.flatten(avg_pool,1)
         cls_logits = self.clssifier(flatten)
@@ -157,7 +149,7 @@ class UNet(nn.Module):
 
 
 
-def m_unet(**kwargs):
+def unet(**kwargs):
     return UNet(stem=DoubleConv2D,
                 down=Down2D,
                 up=Up2D,
@@ -168,7 +160,7 @@ def m_unet(**kwargs):
                 **kwargs)
 
 
-def mr_unet(**kwargs):
+def r_unet(**kwargs):
     return UNet(stem=DoubleConv2D,
                 down=Down2D,
                 up=Up2D,
@@ -178,30 +170,6 @@ def mr_unet(**kwargs):
                 cls_location='middle',
                 revise=True,
                 **kwargs)
-
-
-def e_unet(**kwargs):
-    return UNet(stem=DoubleConv2D,
-                down=Down2D,
-                up=Up2D,
-                tail=Tail2D,
-                width=[64,128,256,512,1024],
-                conv_builder=DoubleConv2D,
-                cls_location='end',
-                **kwargs)
-
-
-def er_unet(**kwargs):
-    return UNet(stem=DoubleConv2D,
-                down=Down2D,
-                up=Up2D,
-                tail=Tail2D,
-                width=[64,128,256,512,1024],
-                conv_builder=DoubleConv2D,
-                cls_location='end',
-                revise=True,
-                **kwargs)
-
 
 
 # if __name__ == "__main__":

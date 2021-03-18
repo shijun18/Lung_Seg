@@ -17,7 +17,7 @@ tuner:
     #choice: maximize, minimize
     optimize_mode: maximize
 trial:
-  command: python nni_run.py #port 9666
+  command: python nni_run.py #port 9668
   codeDir: /staff/shijun/torch_projects/Lung_Seg
   gpuNum: 1
 localConfig:

@@ -38,6 +38,7 @@ class SemanticSeg(object):
     '''
     def __init__(self,
                  net_name=None,
+                 encoder_name=None,
                  lr=1e-3,
                  n_epoch=1,
                  channels=1,
@@ -50,6 +51,7 @@ class SemanticSeg(object):
                  num_workers=0,
                  device=None,
                  pre_trained=False,
+                 ex_pre_trained=False,
                  ckpt_point=True,
                  weight_path=None,
                  weight_decay=0.,
@@ -63,6 +65,7 @@ class SemanticSeg(object):
         super(SemanticSeg, self).__init__()
 
         self.net_name = net_name
+        self.encoder_name = encoder_name
         self.lr = lr
         self.n_epoch = n_epoch
         self.channels = channels
@@ -76,6 +79,7 @@ class SemanticSeg(object):
         self.device = device
         self.net = self._get_net(self.net_name)
         self.pre_trained = pre_trained
+        self.ex_pre_trained = ex_pre_trained 
         self.ckpt_point = ckpt_point
         self.weight_path = weight_path
 
@@ -544,9 +548,64 @@ class SemanticSeg(object):
         return cls_result
 
     def _get_net(self, net_name):
-        if '_unet' in net_name:
-            from model import unet
-            net = unet.__dict__[net_name](n_channels=self.channels,n_classes=self.num_classes)    
+        if net_name == 'unet':
+            if self.encoder_name is None:
+                from model import unet
+                net = unet.__dict__[net_name](n_channels=self.channels,n_classes=self.num_classes)
+            else:
+                import segmentation_models_pytorch as smp
+                net = smp.Unet(
+                    encoder_name=self.encoder_name,
+                    encoder_weights=None if not self.ex_pre_trained else 'imagenet',
+                    in_channels=self.channels,
+                    classes=self.num_classes,                     
+                    aux_params={"classes":self.num_classes-1} 
+                )
+        elif net_name == 'unet++':
+            if self.encoder_name is None:
+                raise ValueError(
+                    "encoder name must not be 'None'!"
+                )
+            else:
+                import segmentation_models_pytorch as smp
+                net = smp.UnetPlusPlus(
+                    encoder_name=self.encoder_name,
+                    encoder_weights=None if not self.ex_pre_trained else 'imagenet',
+                    in_channels=self.channels,
+                    classes=self.num_classes,                     
+                    aux_params={"classes":self.num_classes-1} 
+                )
+
+        elif net_name == 'FPN':
+            if self.encoder_name is None:
+                raise ValueError(
+                    "encoder name must not be 'None'!"
+                )
+            else:
+                import segmentation_models_pytorch as smp
+                net = smp.FPN(
+                    encoder_name=self.encoder_name,
+                    encoder_weights=None if not self.ex_pre_trained else 'imagenet',
+                    in_channels=self.channels,
+                    classes=self.num_classes,                     
+                    aux_params={"classes":self.num_classes-1} 
+                )
+        
+        elif net_name == 'deeplabv3+':
+            if self.encoder_name is None:
+                raise ValueError(
+                    "encoder name must not be 'None'!"
+                )
+            else:
+                import segmentation_models_pytorch as smp
+                net = smp.DeepLabV3Plus(
+                    encoder_name=self.encoder_name,
+                    encoder_weights=None if not self.ex_pre_trained else 'imagenet',
+                    in_channels=self.channels,
+                    classes=self.num_classes,                     
+                    aux_params={"classes":self.num_classes-1} 
+                )
+
 
         elif net_name.startswith('ResUNet'):
             from model import resUnet
@@ -642,7 +701,9 @@ class SemanticSeg(object):
                                         lr=lr,
                                         weight_decay=self.weight_decay,
                                         momentum=self.momentum)
-
+        elif optimizer == 'AdamW':
+            optimizer = torch.optim.AdamW(filter(lambda p: p.requires_grad, net.parameters()),
+                                         lr=lr,weight_decay=self.weight_decay)
         return optimizer
 
     def _get_lr_scheduler(self, lr_scheduler, optimizer):
@@ -655,6 +716,9 @@ class SemanticSeg(object):
         elif lr_scheduler == 'CosineAnnealingLR':
             lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
                 optimizer, T_max=self.T_max)
+        elif lr_scheduler == 'CosineAnnealingWarmRestarts':
+            lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+                        optimizer, 5, T_mult=2)
         return lr_scheduler
 
     def _get_pre_trained(self, weight_path, ckpt_point=True):
