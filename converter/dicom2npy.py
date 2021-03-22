@@ -17,7 +17,7 @@ def hdf5_reader(data_path, key):
     return image
 
 
-save_path = '/acsa-med/radiology/Med_Seg/LIDC/npy_data'
+save_path = '/acsa-med/radiology/Med_Seg/LIDC/new_npy_data'
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
@@ -31,7 +31,7 @@ for i in range(1,1011):
 
     # get image
     try:
-        vol = scan.to_volume().astype(np.float32)
+        vol = scan.to_volume().astype(np.int16)
     except:
         continue
     print(vol.shape)
@@ -40,7 +40,7 @@ for i in range(1,1011):
     # get nodule annotation
     nods = scan.cluster_annotations()
 
-    label = np.zeros_like(vol,dtype=np.float32)
+    label = np.zeros_like(vol,dtype=np.uint8)
     if len(nods) != 0:
         for nod in nods:
             cmask,cbbox,masks = consensus(nod, clevel=0.5)
@@ -51,4 +51,5 @@ for i in range(1,1011):
             label = np.transpose(label,(2,0,1))
             save_as_hdf5(vol,os.path.join(save_path,pid+'.hdf5'),'image')
             save_as_hdf5(label,os.path.join(save_path,pid+'.hdf5'),'label')
+            assert list(np.unique(label)) == [0,1]
             print('%s done !'%pid)
